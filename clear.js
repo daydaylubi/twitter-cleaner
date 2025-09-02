@@ -535,11 +535,27 @@
     // ==================== 删除处理 ====================
     // 删除策略映射
     const deleteHandlers = {
-        [TweetType.RETWEET]: undoRetweet,
-        [TweetType.REPLY]: deleteViaMenu,
-        [TweetType.TWEET]: deleteViaMenu,
-        [TweetType.QUOTE]: deleteViaMenu
+        [TweetType.RETWEET]: undoRetweetWithScroll,
+        [TweetType.REPLY]: deleteViaMenuWithScroll,
+        [TweetType.TWEET]: deleteViaMenuWithScroll,
+        [TweetType.QUOTE]: deleteViaMenuWithScroll
     };
+    
+    // 带滚动的转推处理函数
+    async function undoRetweetWithScroll(tweetElement) {
+        // 先滚动到转推按钮位置
+        await scrollToRetweetButton(tweetElement);
+        // 再执行原来的转推取消逻辑
+        return await undoRetweet(tweetElement);
+    }
+    
+    // 带滚动的普通删除处理函数
+    async function deleteViaMenuWithScroll(tweetElement) {
+        // 先滚动到更多按钮位置
+        await scrollToMoreButton(tweetElement);
+        // 再执行原来的删除逻辑
+        return await deleteViaMenu(tweetElement);
+    }
     // 高层统一接口
     async function processTweet(tweetInfo) {
         try {
@@ -725,47 +741,6 @@
         }
     }
     
-    // ==================== 滚动到推文位置（归属：推文查找） ====================
-    
-    async function scrollToTweet(tweetElement) {
-        try {
-            // 获取推文元素的位置信息
-            const rect = tweetElement.getBoundingClientRect();
-            const elementTop = rect.top + window.pageYOffset;
-            const elementHeight = rect.height;
-            
-            // 计算目标滚动位置，让推文显示在视窗中央偏上的位置
-            const viewportHeight = window.innerHeight;
-            const targetScrollTop = elementTop - (viewportHeight * 0.3);
-            
-            log(`📍 滚动到推文位置: ${Math.round(targetScrollTop)}px`, 'debug');
-            
-            // 平滑滚动到目标位置
-            window.scrollTo({
-                top: Math.max(0, targetScrollTop), // 确保不会滚动到负值
-                behavior: 'smooth'
-            });
-            
-            // 等待滚动完成
-            await wait(2000);
-            
-            // 验证滚动是否成功
-            const newRect = tweetElement.getBoundingClientRect();
-            const isVisible = newRect.top >= 0 && newRect.bottom <= viewportHeight;
-            
-            if (isVisible) {
-                log('✅ 推文已滚动到视窗内', 'debug');
-            } else {
-                log('⚠️ 推文可能未完全显示在视窗内', 'debug');
-            }
-            
-            return true;
-            
-        } catch (error) {
-            log(`滚动到推文位置失败: ${error.message}`, 'error');
-            return false;
-        }
-    }
     
     // ==================== 单条推文处理 ====================
     
@@ -803,14 +778,6 @@
         const shouldProcess = tweetInfo.date < CONFIG.cutoffDate;
 
         if (shouldProcess) {
-            log(`🎯 符合处理条件，正在滚动到推文位置...`, 'info');
-
-            // 滚动到推文位置
-            const scrollSuccess = await scrollToTweet(tweetInfo.element);
-            if (!scrollSuccess) {
-                log('⚠️ 滚动到推文位置失败，继续处理...', 'warning');
-            }
-
             log(`🗑️ 开始处理${tweetInfo.type}...`, 'info');
             const success = await processTweet(tweetInfo);
 
@@ -944,6 +911,87 @@
         
         const successRate = stats.processed > 0 ? (stats.deleted / stats.processed * 100).toFixed(1) : 0;
         log(`✨ 删除成功率: ${successRate}%`);
+    }
+    
+    // 滚动到转推按钮位置
+    async function scrollToRetweetButton(tweetElement) {
+        try {
+            const retweetButton = findRetweetButton(tweetElement);
+            if (retweetButton) {
+                // 获取转推按钮的位置信息
+                const rect = retweetButton.getBoundingClientRect();
+                const buttonTop = rect.top + window.pageYOffset;
+                const viewportHeight = window.innerHeight;
+                
+                // 将转推按钮滚动到视窗中央偏下位置（因为按钮通常在推文底部）
+                const targetScrollTop = buttonTop - (viewportHeight * 0.7);
+                
+                log(`📍 滚动到转推按钮位置: ${Math.round(targetScrollTop)}px`, 'debug');
+                
+                window.scrollTo({
+                    top: Math.max(0, targetScrollTop),
+                    behavior: 'smooth'
+                });
+                
+                // 等待滚动完成
+                await wait(1500);
+                
+                log('✅ 转推按钮已滚动到视窗内', 'debug');
+            } else {
+                // 如果找不到转推按钮，回退到推文整体滚动
+                await scrollToTweetElement(tweetElement);
+            }
+        } catch (error) {
+            log(`滚动到转推按钮位置失败: ${error.message}`, 'error');
+        }
+    }
+    
+    // 滚动到更多按钮位置
+    async function scrollToMoreButton(tweetElement) {
+        try {
+            // 获取推文元素的位置信息
+            const rect = tweetElement.getBoundingClientRect();
+            const elementTop = rect.top + window.pageYOffset;
+            const viewportHeight = window.innerHeight;
+            
+            // 将推文顶部滚动到视窗中央偏上位置（更多按钮通常在推文顶部）
+            const targetScrollTop = elementTop - (viewportHeight * 0.3);
+            
+            log(`📍 滚动到更多按钮位置: ${Math.round(targetScrollTop)}px`, 'debug');
+            
+            window.scrollTo({
+                top: Math.max(0, targetScrollTop),
+                behavior: 'smooth'
+            });
+            
+            // 等待滚动完成
+            await wait(1500);
+            
+            log('✅ 更多按钮已滚动到视窗内', 'debug');
+        } catch (error) {
+            log(`滚动到更多按钮位置失败: ${error.message}`, 'error');
+        }
+    }
+    
+    // 通用推文元素滚动函数（作为备选方案）
+    async function scrollToTweetElement(tweetElement) {
+        try {
+            const rect = tweetElement.getBoundingClientRect();
+            const elementTop = rect.top + window.pageYOffset;
+            const viewportHeight = window.innerHeight;
+            const targetScrollTop = elementTop - (viewportHeight * 0.3);
+            
+            log(`📍 滚动到推文位置: ${Math.round(targetScrollTop)}px`, 'debug');
+            
+            window.scrollTo({
+                top: Math.max(0, targetScrollTop),
+                behavior: 'smooth'
+            });
+            
+            await wait(1500);
+        } catch (error) {
+            log(`滚动到推文位置失败: ${error.message}`, 'error');
+        }
     }
     
     // ==================== 导出到全局 ====================
