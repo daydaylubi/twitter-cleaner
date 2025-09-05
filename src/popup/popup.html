@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twitter Cleaner</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <h1>Twitter Cleaner</h1>
+      <p class="subtitle">批量清理 Twitter 历史推文</p>
+    </div>
+
+    <!-- 设置区域 -->
+    <div class="settings-section">
+      <h3>清理设置</h3>
+      
+      <!-- 截止日期 -->
+      <div class="form-group">
+        <label for="cutoffDate">截止日期</label>
+        <input type="date" id="cutoffDate" name="cutoffDate">
+        <small>删除此日期之前的所有推文</small>
+      </div>
+
+      <!-- 推文类型 -->
+      <div class="form-group">
+        <label>推文类型</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="TWEET" checked>
+            <span class="checkmark"></span>
+            推文
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="RETWEET" checked>
+            <span class="checkmark"></span>
+            转推
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="REPLY" checked>
+            <span class="checkmark"></span>
+            回复
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="QUOTE" checked>
+            <span class="checkmark"></span>
+            引用
+          </label>
+        </div>
+      </div>
+
+      <!-- 高级设置 -->
+      <div class="form-group">
+        <button type="button" id="advancedToggle" class="btn-link">
+          高级设置 ▼
+        </button>
+        <div id="advancedSettings" class="advanced-settings" style="display: none;">
+          <div class="setting-item">
+            <label for="deleteDelay">删除间隔 (毫秒)</label>
+            <input type="number" id="deleteDelay" value="2000" min="500" max="10000">
+          </div>
+          <div class="setting-item">
+            <label for="scrollDelay">滚动间隔 (毫秒)</label>
+            <input type="number" id="scrollDelay" value="3000" min="1000" max="10000">
+          </div>
+          <div class="setting-item">
+            <label for="maxTweets">最大处理数量</label>
+            <input type="number" id="maxTweets" value="10000" min="100" max="50000">
+          </div>
+          <div class="setting-item">
+            <label class="checkbox-label">
+              <input type="checkbox" id="debugMode">
+              <span class="checkmark"></span>
+              调试模式
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 控制区域 -->
+    <div class="control-section">
+      <button id="startBtn" class="btn btn-primary">
+        <span class="btn-icon">▶</span>
+        开始清理
+      </button>
+      <button id="stopBtn" class="btn btn-danger" disabled>
+        <span class="btn-icon">⏸</span>
+        停止清理
+      </button>
+      <button id="resetBtn" class="btn btn-secondary">
+        <span class="btn-icon">↻</span>
+        重置进度
+      </button>
+    </div>
+
+    <!-- 状态区域 -->
+    <div class="status-section">
+      <!-- 进度信息 -->
+      <div class="progress-info">
+        <div class="progress-item">
+          <span class="label">已处理:</span>
+          <span class="value" id="processedCount">0</span>
+        </div>
+        <div class="progress-item">
+          <span class="label">已删除:</span>
+          <span class="value" id="deletedCount">0</span>
+        </div>
+        <div class="progress-item">
+          <span class="label">跳过:</span>
+          <span class="value" id="skippedCount">0</span>
+        </div>
+        <div class="progress-item">
+          <span class="label">错误:</span>
+          <span class="value" id="errorsCount">0</span>
+        </div>
+      </div>
+      
+      <!-- 进度条 -->
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0%</div>
+      </div>
+
+      <!-- 当前操作 -->
+      <div class="current-operation" id="currentOperation">
+        <span class="operation-text">准备就绪</span>
+      </div>
+
+      <!-- 日志区域 -->
+      <div class="log-section">
+        <div class="log-header">
+          <h4>执行日志</h4>
+          <button id="clearLogBtn" class="btn-link">清除日志</button>
+        </div>
+        <div id="logContainer" class="log-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
