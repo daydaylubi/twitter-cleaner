@@ -48,8 +48,6 @@ graph TD
     Popup -->|chrome.tabs.sendMessage| Content[Content Script]
     Content -->|chrome.runtime.sendMessage| Background
     Background -->|chrome.runtime.sendMessage| Popup
-    Background -->|chrome.tabs.sendMessage| Content
-    Content -->|转发| Background -->|转发| Popup
 
     style Popup fill:#e1f5fe
     style Background fill:#f3e5f5
@@ -108,4 +106,3 @@ Popup → Background: SAVE_CONFIG
 ```
 
 这种架构确保了扩展的稳定性和可维护性，同时提供了良好的用户体验。
-
