@@ -386,35 +386,6 @@ body {
   color: #14171a;
 }
 
-/* Progress Bar */
-.progress-container {
-  margin-bottom: 20px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 10px;
-  background-color: #e1e8ed;
-  border-radius: 5px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #1da1f2 0%, #0d8bd9 100%);
-  transition: width 0.4s ease;
-  width: 0%;
-  border-radius: 5px;
-}
-
-.progress-text {
-  text-align: center;
-  font-size: 13px;
-  color: #657786;
-  font-weight: 500;
-}
-
 /* Current Operation */
 .current-operation {
   margin-bottom: 20px;

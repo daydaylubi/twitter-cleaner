@@ -72,8 +72,6 @@ class PopupManager {
       deletedCount: document.getElementById('deletedCount'),
       skippedCount: document.getElementById('skippedCount'),
       errorsCount: document.getElementById('errorsCount'),
-      progressFill: document.getElementById('progressFill'),
-      progressText: document.getElementById('progressText'),
       currentOperation: document.getElementById('currentOperation'),
 
       // 日志元素
@@ -257,7 +255,6 @@ class PopupManager {
 
       // 更新 UI
       this.updateStatsUI();
-      this.updateProgressUI();
       this.log('进度已重置', 'info');
     } catch (error) {
       this.logger.error('重置进度失败:', error);
@@ -296,12 +293,10 @@ class PopupManager {
         this.currentStats = response.stats || this.currentStats;
         this.setRunningState(response.isRunning || false);
         this.updateStatsUI();
-        this.updateProgressUI();
       }
     } catch (error) {
       // 如果 content script 未运行，使用默认状态
       this.updateStatsUI();
-      this.updateProgressUI();
     }
   }
 
@@ -310,14 +305,6 @@ class PopupManager {
     this.elements.deletedCount.textContent = this.currentStats.deleted;
     this.elements.skippedCount.textContent = this.currentStats.skipped;
     this.elements.errorsCount.textContent = this.currentStats.errors;
-  }
-
-  updateProgressUI() {
-    const total = this.currentStats.processed || 1;
-    const percentage = Math.round((this.currentStats.deleted / total) * 100);
-
-    this.elements.progressFill.style.width = `${percentage}%`;
-    this.elements.progressText.textContent = `${percentage}%`;
   }
 
   /**
@@ -346,7 +333,6 @@ class PopupManager {
   handleProgressUpdate(payload) {
     this.currentStats = payload.stats;
     this.updateStatsUI();
-    this.updateProgressUI();
 
     // 更新当前操作
     if (payload.currentTweet) {
