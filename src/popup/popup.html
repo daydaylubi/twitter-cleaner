@@ -15,19 +15,22 @@
     </div>
 
     <!-- 设置区域 -->
-    <div class="settings-section">
-      <h3>清理设置</h3>
-      
+    <div class="card">
+      <h3 class="card-title">
+        <span>⚙️</span>
+        清理设置
+      </h3>
+
       <!-- 截止日期 -->
       <div class="form-group">
-        <label for="cutoffDate">截止日期</label>
+        <label for="cutoffDate">📅 截止日期</label>
         <input type="date" id="cutoffDate" name="cutoffDate">
         <small>删除此日期之前的所有推文</small>
       </div>
 
       <!-- 推文类型 -->
       <div class="form-group">
-        <label>推文类型</label>
+        <label>🗨️ 推文类型</label>
         <div class="checkbox-group">
           <label class="checkbox-label">
             <input type="checkbox" name="tweetTypes" value="TWEET" checked>
@@ -55,26 +58,27 @@
       <!-- 高级设置 -->
       <div class="form-group">
         <button type="button" id="advancedToggle" class="btn-link">
-          高级设置 ▼
+          <span>🔧 高级设置</span>
+          <span>▼</span>
         </button>
         <div id="advancedSettings" class="advanced-settings" style="display: none;">
           <div class="setting-item">
-            <label for="deleteDelay">删除间隔 (毫秒)</label>
+            <label for="deleteDelay">⏱️ 删除间隔 (毫秒)</label>
             <input type="number" id="deleteDelay" value="2000" min="500" max="10000">
           </div>
           <div class="setting-item">
-            <label for="scrollDelay">滚动间隔 (毫秒)</label>
+            <label for="scrollDelay">🖱️ 滚动间隔 (毫秒)</label>
             <input type="number" id="scrollDelay" value="3000" min="1000" max="10000">
           </div>
           <div class="setting-item">
-            <label for="maxTweets">最大处理数量</label>
+            <label for="maxTweets">📊 最大处理数量</label>
             <input type="number" id="maxTweets" value="10000" min="100" max="50000">
           </div>
           <div class="setting-item">
             <label class="checkbox-label">
               <input type="checkbox" id="debugMode">
               <span class="checkmark"></span>
-              调试模式
+              🐞 调试模式
             </label>
           </div>
         </div>
@@ -98,27 +102,32 @@
     </div>
 
     <!-- 状态区域 -->
-    <div class="status-section">
+    <div class="card status-section">
+      <h3 class="card-title">
+        <span>📊</span>
+        执行状态
+      </h3>
+
       <!-- 进度信息 -->
       <div class="progress-info">
         <div class="progress-item">
-          <span class="label">已处理:</span>
+          <span class="label">已处理</span>
           <span class="value" id="processedCount">0</span>
         </div>
         <div class="progress-item">
-          <span class="label">已删除:</span>
+          <span class="label">已删除</span>
           <span class="value" id="deletedCount">0</span>
         </div>
         <div class="progress-item">
-          <span class="label">跳过:</span>
+          <span class="label">跳过</span>
           <span class="value" id="skippedCount">0</span>
         </div>
         <div class="progress-item">
-          <span class="label">错误:</span>
+          <span class="label">错误</span>
           <span class="value" id="errorsCount">0</span>
         </div>
       </div>
-      
+
       <!-- 进度条 -->
       <div class="progress-container">
         <div class="progress-bar">
@@ -135,7 +144,10 @@
       <!-- 日志区域 -->
       <div class="log-section">
         <div class="log-header">
-          <h4>执行日志</h4>
+          <h4>
+            <span>📋</span>
+            执行日志
+          </h4>
           <button id="clearLogBtn" class="btn-link">清除日志</button>
         </div>
         <div id="logContainer" class="log-container"></div>

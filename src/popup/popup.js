@@ -96,9 +96,20 @@ class PopupManager {
       this.elements.advancedSettings.style.display = isVisible
         ? 'none'
         : 'block';
-      this.elements.advancedToggle.textContent = isVisible
-        ? '高级设置 ▼'
-        : '高级设置 ▲';
+
+      // 更新按钮文本和图标
+      const toggleText = this.elements.advancedToggle.querySelector('span:first-child');
+      const toggleIcon = this.elements.advancedToggle.querySelector('span:last-child');
+
+      if (isVisible) {
+        toggleText.textContent = '🔧 高级设置';
+        toggleIcon.textContent = '▼';
+        this.elements.advancedToggle.classList.remove('active');
+      } else {
+        toggleText.textContent = '🔧 高级设置';
+        toggleIcon.textContent = '▲';
+        this.elements.advancedToggle.classList.add('active');
+      }
     });
 
     // 配置变更自动保存

@@ -48,6 +48,10 @@ const baseConfig = {
         {
           from: 'src/assets',
           to: 'assets'
+        },
+        {
+          from: 'src/popup/popup.css',
+          to: 'popup.css'
         }
       ]
     })
