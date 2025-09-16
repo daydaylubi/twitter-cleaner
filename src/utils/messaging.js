@@ -26,20 +26,20 @@ export class MessageManager {
    */
   handleMessage(message, sender, sendResponse) {
     const { type, payload } = message;
-    
+
     // 查找对应的消息处理器
     const handler = this.messageHandlers.get(type);
     if (handler) {
       try {
         const result = handler(payload, sender);
-        
+
         // 如果是 Promise，等待结果
         if (result instanceof Promise) {
           result
-            .then(response => {
+            .then((response) => {
               sendResponse({ success: true, data: response });
             })
-            .catch(error => {
+            .catch((error) => {
               sendResponse({ success: false, error: error.message });
             });
         } else {
@@ -49,7 +49,9 @@ export class MessageManager {
         sendResponse({ success: false, error: error.message });
       }
     } else {
-      sendResponse({ success: false, error: `Unknown message type: ${type}` });
+      // 未找到消息处理器时，记录警告日志并发送空响应
+      console.warn(`未找到消息处理器: ${type}`);
+      sendResponse();
     }
   }
 
@@ -63,20 +65,24 @@ export class MessageManager {
   }
 
   /**
-   * 发送消息到 background script
+   * 发送消息到扩展的 runtime（background script 或 popup）
    * @param {Object} message - 消息对象
    * @returns {Promise<Object>} 响应数据
    */
-  async sendToBackground(message) {
+  async sendToRuntime(message) {
     try {
+      /** @type {any} */
       const response = await chrome.runtime.sendMessage(message);
-      if (response.success) {
+      // 标准化响应格式
+      if (response && response.success) {
         return response.data;
-      } else {
+      } else if (response && response.error) {
         throw new Error(response.error);
       }
+      // 如果响应不是标准格式，直接返回
+      return response;
     } catch (error) {
-      console.error('发送消息到 background script 失败:', error);
+      console.error('发送消息到 runtime 失败:', error);
       throw error;
     }
   }
@@ -89,11 +95,16 @@ export class MessageManager {
    */
   async sendMessage(tabId, message) {
     try {
+      /** @type {any} */
       const response = await chrome.tabs.sendMessage(tabId, message);
+      // 标准化响应格式
       if (response && response.success) {
         return response.data;
+      } else if (response && response.error) {
+        throw new Error(response.error);
       }
-      return response; // 直接返回 response（兼容旧的处理方式）
+      // 如果响应不是标准格式，直接返回
+      return response;
     } catch (error) {
       console.error('发送消息到 content script 失败:', error);
       throw error;
@@ -108,175 +119,24 @@ export class MessageManager {
    */
   async broadcastMessage(message, urlPattern = '*://*.twitter.com/*') {
     try {
+      /** @type {chrome.tabs.Tab[]} */
       const tabs = await chrome.tabs.query({ url: urlPattern });
       const responses = [];
-      
+
       for (const tab of tabs) {
         try {
+          /** @type {any} */
           const response = await this.sendMessage(tab.id, message);
           responses.push({ tabId: tab.id, response });
         } catch (error) {
           responses.push({ tabId: tab.id, error: error.message });
         }
       }
-      
+
       return responses;
     } catch (error) {
       console.error('广播消息失败:', error);
       throw error;
     }
-  }
-
-  /**
-   * 发送日志消息到 popup
-   * @param {string} message - 日志消息
-   * @param {string} level - 日志级别
-   */
-  async sendLog(message, level = 'info') {
-    try {
-      await this.sendToBackground({
-        type: 'LOG_MESSAGE',
-        payload: {
-          message,
-          level,
-          timestamp: new Date().toISOString()
-        }
-      });
-    } catch (error) {
-      console.error('发送日志消息失败:', error);
-    }
-  }
-
-  /**
-   * 发送进度更新消息到 popup
-   * @param {Object} stats - 统计数据
-   * @param {Object} currentTweet - 当前处理的推文信息
-   */
-  async sendProgressUpdate(stats, currentTweet = null) {
-    try {
-      await this.sendToBackground({
-        type: 'PROGRESS_UPDATE',
-        payload: {
-          stats,
-          currentTweet
-        }
-      });
-    } catch (error) {
-      console.error('发送进度更新失败:', error);
-    }
-  }
-}
-
-/**
- * Content Script 专用的消息管理器
- */
-export class ContentScriptMessageManager extends MessageManager {
-  constructor() {
-    super();
-    this.setupContentScriptHandlers();
-  }
-
-  /**
-   * 设置 content script 专用消息处理器
-   */
-  setupContentScriptHandlers() {
-    // 开始清理
-    this.registerHandler('START_CLEANING', async (payload) => {
-      // 这里将在 TwitterCleaner 类中实现
-      return { received: true };
-    });
-
-    // 停止清理
-    this.registerHandler('STOP_CLEANING', async (payload) => {
-      // 这里将在 TwitterCleaner 类中实现
-      return { received: true };
-    });
-
-    // 获取状态
-    this.registerHandler('GET_STATUS', async (payload) => {
-      // 这里将在 TwitterCleaner 类中实现
-      return {
-        isRunning: false,
-        stats: {
-          processed: 0,
-          deleted: 0,
-          skipped: 0,
-          errors: 0
-        }
-      };
-    });
-
-    // 重置进度
-    this.registerHandler('RESET_PROGRESS', async (payload) => {
-      // 这里将在 TwitterCleaner 类中实现
-      return { received: true };
-    });
-  }
-}
-
-/**
- * Background Script 专用的消息管理器
- */
-export class BackgroundMessageManager extends MessageManager {
-  constructor() {
-    super();
-    this.setupBackgroundHandlers();
-  }
-
-  /**
-   * 设置 background script 专用消息处理器
-   */
-  setupBackgroundHandlers() {
-    // 日志消息转发
-    this.registerHandler('LOG_MESSAGE', async (payload, sender) => {
-      // 转发日志消息到所有打开的 popup
-      try {
-        const tabs = await chrome.tabs.query({
-          active: true,
-          currentWindow: true
-        });
-        
-        for (const tab of tabs) {
-          try {
-            await chrome.tabs.sendMessage(tab.id, {
-              type: 'LOG_MESSAGE',
-              payload
-            });
-          } catch (error) {
-            // popup 可能没有打开，忽略错误
-          }
-        }
-      } catch (error) {
-        console.error('转发日志消息失败:', error);
-      }
-      
-      return { success: true };
-    });
-
-    // 进度更新转发
-    this.registerHandler('PROGRESS_UPDATE', async (payload, sender) => {
-      // 转发进度更新到所有打开的 popup
-      try {
-        const tabs = await chrome.tabs.query({
-          active: true,
-          currentWindow: true
-        });
-        
-        for (const tab of tabs) {
-          try {
-            await chrome.tabs.sendMessage(tab.id, {
-              type: 'PROGRESS_UPDATE',
-              payload
-            });
-          } catch (error) {
-            // popup 可能没有打开，忽略错误
-          }
-        }
-      } catch (error) {
-        console.error('转发进度更新失败:', error);
-      }
-      
-      return { success: true };
-    });
   }
 }

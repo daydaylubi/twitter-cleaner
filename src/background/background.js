@@ -1,5 +1,10 @@
-import { BackgroundMessageManager } from '../utils/messaging.js';
+import { MessageManager } from '../utils/messaging.js';
 import { StorageManager } from '../utils/storage.js';
+import {
+  POPUP_TO_BACKGROUND,
+  BACKGROUND_TO_POPUP,
+  CONTENT_TO_BACKGROUND,
+} from '../utils/message-types.js';
 import { Logger, createLogger } from '../utils/logger.js';
 
 /**
@@ -10,30 +15,29 @@ class BackgroundService {
   constructor() {
     this.logger = createLogger('Background');
     this.storage = new StorageManager();
-    this.messaging = new BackgroundMessageManager();
+    this.messaging = new MessageManager();
     this.activeTabs = new Map();
-    
+
     this.init();
   }
 
   async init() {
     try {
       this.logger.info('Background Service 初始化开始');
-      
+
       // 设置消息处理器
       this.setupMessageHandlers();
-      
+
       // 设置扩展生命周期监听器
       this.setupLifecycleListeners();
-      
+
       // 设置标签页监听器
       this.setupTabListeners();
-      
+
       // 定期清理过期数据
       this.setupPeriodicCleanup();
-      
+
       this.logger.info('Background Service 初始化完成');
-      
     } catch (error) {
       this.logger.error('Background Service 初始化失败:', error);
     }
@@ -44,88 +48,160 @@ class BackgroundService {
    */
   setupMessageHandlers() {
     // 获取扩展状态
-    this.messaging.registerHandler('GET_EXTENSION_STATUS', async (payload) => {
-      return {
-        version: chrome.runtime.getManifest().version,
-        activeTabs: this.activeTabs.size,
-        timestamp: new Date().toISOString()
-      };
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.GET_EXTENSION_STATUS,
+      async (payload) => {
+        return {
+          version: chrome.runtime.getManifest().version,
+          activeTabs: this.activeTabs.size,
+          timestamp: new Date().toISOString(),
+        };
+      }
+    );
 
     // 获取配置
-    this.messaging.registerHandler('GET_CONFIG', async (payload) => {
-      return await this.storage.getConfig();
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.GET_CONFIG,
+      async (payload) => {
+        return await this.storage.getConfig();
+      }
+    );
 
     // 保存配置
-    this.messaging.registerHandler('SAVE_CONFIG', async (payload) => {
-      await this.storage.saveConfig(payload);
-      return { success: true };
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.SAVE_CONFIG,
+      async (payload) => {
+        await this.storage.saveConfig(payload);
+        return { success: true };
+      }
+    );
 
     // 获取进度
-    this.messaging.registerHandler('GET_PROGRESS', async (payload) => {
-      return await this.storage.getProgress();
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.GET_PROGRESS,
+      async (payload) => {
+        return await this.storage.getProgress();
+      }
+    );
 
     // 保存进度
-    this.messaging.registerHandler('SAVE_PROGRESS', async (payload) => {
-      await this.storage.saveProgress(payload);
-      return { success: true };
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.SAVE_PROGRESS,
+      async (payload) => {
+        await this.storage.saveProgress(payload);
+        return { success: true };
+      }
+    );
 
     // 清除进度
-    this.messaging.registerHandler('CLEAR_PROGRESS', async (payload) => {
-      await this.storage.clearProgress();
-      return { success: true };
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.CLEAR_PROGRESS,
+      async (payload) => {
+        await this.storage.clearProgress();
+        return { success: true };
+      }
+    );
 
     // 获取日志
-    this.messaging.registerHandler('GET_LOGS', async (payload) => {
-      return await this.storage.getLogs();
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.GET_LOGS,
+      async (payload) => {
+        return await this.storage.getLogs();
+      }
+    );
 
     // 清除日志
-    this.messaging.registerHandler('CLEAR_LOGS', async (payload) => {
-      await this.storage.clearLogs();
-      return { success: true };
-    });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.CLEAR_LOGS,
+      async (payload) => {
+        await this.storage.clearLogs();
+        return { success: true };
+      }
+    );
 
     // 注册活跃标签页
-    this.messaging.registerHandler('REGISTER_ACTIVE_TAB', async (payload, sender) => {
-      if (sender.tab) {
-        this.activeTabs.set(sender.tab.id, {
-          url: sender.tab.url,
-          timestamp: Date.now(),
-          ...payload
-        });
-        this.logger.debug(`注册活跃标签页: ${sender.tab.id}`);
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.REGISTER_ACTIVE_TAB,
+      async (payload, sender) => {
+        if (sender.tab) {
+          this.activeTabs.set(sender.tab.id, {
+            url: sender.tab.url,
+            timestamp: Date.now(),
+            ...payload,
+          });
+          this.logger.debug(`注册活跃标签页: ${sender.tab.id}`);
+        }
+        return { success: true };
       }
-      return { success: true };
-    });
+    );
 
     // 注销活跃标签页
-    this.messaging.registerHandler('UNREGISTER_ACTIVE_TAB', async (payload, sender) => {
-      if (sender.tab) {
-        this.activeTabs.delete(sender.tab.id);
-        this.logger.debug(`注销活跃标签页: ${sender.tab.id}`);
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.UNREGISTER_ACTIVE_TAB,
+      async (payload, sender) => {
+        if (sender.tab) {
+          this.activeTabs.delete(sender.tab.id);
+          this.logger.debug(`注销活跃标签页: ${sender.tab.id}`);
+        }
+        return { success: true };
       }
-      return { success: true };
-    });
+    );
 
     // 广播消息到所有活跃标签页
-    this.messaging.registerHandler('BROADCAST_TO_ACTIVE_TABS', async (payload) => {
-      const results = [];
-      for (const [tabId, tabInfo] of this.activeTabs) {
-        try {
-          const response = await chrome.tabs.sendMessage(tabId, payload.message);
-          results.push({ tabId, success: true, response });
-        } catch (error) {
-          results.push({ tabId, success: false, error: error.message });
+    this.messaging.registerHandler(
+      POPUP_TO_BACKGROUND.BROADCAST_TO_ACTIVE_TABS,
+      async (payload) => {
+        const results = [];
+        for (const [tabId, tabInfo] of this.activeTabs) {
+          try {
+            const response = await chrome.tabs.sendMessage(
+              tabId,
+              payload.message
+            );
+            results.push({ tabId, success: true, response });
+          } catch (error) {
+            results.push({ tabId, success: false, error: error.message });
+          }
         }
+        return results;
       }
-      return results;
-    });
+    );
+
+    // 处理来自 content script 的日志消息
+    this.messaging.registerHandler(
+      CONTENT_TO_BACKGROUND.LOG_MESSAGE,
+      async (payload, sender) => {
+        // 转发日志消息到 popup
+        try {
+          await this.messaging.sendToRuntime({
+            type: BACKGROUND_TO_POPUP.LOG_MESSAGE,
+            payload,
+          });
+        } catch (error) {
+          console.error('转发日志消息失败:', error);
+        }
+
+        return { success: true };
+      }
+    );
+
+    // 处理来自 content script 的进度更新消息
+    this.messaging.registerHandler(
+      CONTENT_TO_BACKGROUND.PROGRESS_UPDATE,
+      async (payload, sender) => {
+        // 转发进度更新到 popup
+        try {
+          await this.messaging.sendToRuntime({
+            type: BACKGROUND_TO_POPUP.PROGRESS_UPDATE,
+            payload,
+          });
+        } catch (error) {
+          console.error('转发进度更新失败:', error);
+        }
+
+        return { success: true };
+      }
+    );
   }
 
   /**
@@ -188,7 +264,7 @@ class BackgroundService {
   async handleInstall(details) {
     try {
       this.logger.info('扩展安装/更新', details);
-      
+
       if (details.reason === 'install') {
         // 首次安装
         await this.handleFirstInstall();
@@ -196,7 +272,6 @@ class BackgroundService {
         // 更新安装
         await this.handleUpdate(details.previousVersion);
       }
-      
     } catch (error) {
       this.logger.error('处理扩展安装失败:', error);
     }
@@ -208,14 +283,13 @@ class BackgroundService {
   async handleFirstInstall() {
     try {
       this.logger.info('首次安装，初始化默认配置');
-      
+
       // 设置默认配置
       const defaultConfig = this.storage.getDefaultConfig();
       await this.storage.saveConfig(defaultConfig);
-      
+
       // 可以在这里显示欢迎页面或设置指南
       // chrome.tabs.create({ url: 'welcome.html' });
-      
     } catch (error) {
       this.logger.error('处理首次安装失败:', error);
     }
@@ -226,11 +300,12 @@ class BackgroundService {
    */
   async handleUpdate(previousVersion) {
     try {
-      this.logger.info(`扩展更新: ${previousVersion} → ${chrome.runtime.getManifest().version}`);
-      
+      this.logger.info(
+        `扩展更新: ${previousVersion} → ${chrome.runtime.getManifest().version}`
+      );
+
       // 可以在这里执行版本特定的迁移逻辑
       await this.migrateData(previousVersion);
-      
     } catch (error) {
       this.logger.error('处理扩展更新失败:', error);
     }
@@ -243,12 +318,11 @@ class BackgroundService {
     try {
       // 根据版本执行相应的迁移逻辑
       this.logger.info(`执行数据迁移: ${previousVersion}`);
-      
+
       // 示例：如果是从 1.0.0 版本升级
       if (previousVersion === '1.0.0') {
         // 执行特定的迁移逻辑
       }
-      
     } catch (error) {
       this.logger.error('数据迁移失败:', error);
     }
@@ -260,10 +334,9 @@ class BackgroundService {
   async handleStartup() {
     try {
       this.logger.info('扩展启动');
-      
+
       // 恢复活跃标签页状态
       await this.restoreActiveTabs();
-      
     } catch (error) {
       this.logger.error('处理扩展启动失败:', error);
     }
@@ -277,14 +350,13 @@ class BackgroundService {
       // 检查是否为 Twitter 页面
       if (this.isTwitterPage(tab.url)) {
         this.logger.debug(`Twitter 标签页更新: ${tabId}`);
-        
+
         // 可以在这里注入 content script 或执行其他操作
         // chrome.scripting.executeScript({
         //   target: { tabId },
         //   files: ['content.js']
         // });
       }
-      
     } catch (error) {
       this.logger.error('处理标签页更新失败:', error);
     }
@@ -297,7 +369,6 @@ class BackgroundService {
     try {
       this.activeTabs.delete(tabId);
       this.logger.debug(`标签页移除: ${tabId}`);
-      
     } catch (error) {
       this.logger.error('处理标签页移除失败:', error);
     }
@@ -312,7 +383,6 @@ class BackgroundService {
       if (tab && this.isTwitterPage(tab.url)) {
         this.logger.debug(`Twitter 标签页激活: ${activeInfo.tabId}`);
       }
-      
     } catch (error) {
       this.logger.error('处理标签页激活失败:', error);
     }
@@ -322,10 +392,7 @@ class BackgroundService {
    * 检查是否为 Twitter 页面
    */
   isTwitterPage(url) {
-    return url && (
-      url.includes('twitter.com') || 
-      url.includes('x.com')
-    );
+    return url && (url.includes('twitter.com') || url.includes('x.com'));
   }
 
   /**
@@ -334,18 +401,17 @@ class BackgroundService {
   async restoreActiveTabs() {
     try {
       const tabs = await chrome.tabs.query({});
-      
+
       for (const tab of tabs) {
         if (this.isTwitterPage(tab.url)) {
           this.activeTabs.set(tab.id, {
             url: tab.url,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           });
         }
       }
-      
+
       this.logger.info(`恢复 ${this.activeTabs.size} 个活跃标签页`);
-      
     } catch (error) {
       this.logger.error('恢复活跃标签页失败:', error);
     }
@@ -357,33 +423,34 @@ class BackgroundService {
   async cleanupExpiredData() {
     try {
       this.logger.debug('清理过期数据');
-      
+
       // 清理过期的进度数据（超过 7 天）
       const progress = await this.storage.getProgress();
       if (progress.timestamp) {
         const progressDate = new Date(progress.timestamp);
         const expireDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        
+
         if (progressDate < expireDate) {
           await this.storage.clearProgress();
           this.logger.info('清理过期进度数据');
         }
       }
-      
+
       // 清理过期的日志数据（超过 3 天）
       const logs = await this.storage.getLogs();
       const expireDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-      
-      const recentLogs = logs.filter(log => {
+
+      const recentLogs = logs.filter((log) => {
         const logDate = new Date(log.timestamp);
         return logDate > expireDate;
       });
-      
+
       if (recentLogs.length !== logs.length) {
         await this.storage.saveLogs(recentLogs);
-        this.logger.info(`清理过期日志数据: ${logs.length - recentLogs.length} 条`);
+        this.logger.info(
+          `清理过期日志数据: ${logs.length - recentLogs.length} 条`
+        );
       }
-      
     } catch (error) {
       this.logger.error('清理过期数据失败:', error);
     }
@@ -396,14 +463,13 @@ class BackgroundService {
     try {
       const now = Date.now();
       const inactiveThreshold = 5 * 60 * 1000; // 5 分钟
-      
+
       for (const [tabId, tabInfo] of this.activeTabs) {
         if (now - tabInfo.timestamp > inactiveThreshold) {
           this.activeTabs.delete(tabId);
           this.logger.debug(`清理不活跃标签页: ${tabId}`);
         }
       }
-      
     } catch (error) {
       this.logger.error('清理不活跃标签页失败:', error);
     }
@@ -417,7 +483,7 @@ class BackgroundService {
       version: chrome.runtime.getManifest().version,
       activeTabs: this.activeTabs.size,
       uptime: Date.now() - (chrome.runtime.getManifest().manifest_version || 0),
-      memoryUsage: process.memoryUsage ? process.memoryUsage() : null
+      memoryUsage: process.memoryUsage ? process.memoryUsage() : null,
     };
   }
 }
