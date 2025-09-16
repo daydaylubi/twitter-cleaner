@@ -40,9 +40,6 @@ class PopupManager {
       // 设置消息处理器
       this.setupMessageHandlers();
 
-      // 获取当前状态
-      await this.updateStatus();
-
       this.logger.info('Popup 初始化完成');
     } catch (error) {
       this.logger.error('Popup 初始化失败:', error);
@@ -63,8 +60,7 @@ class PopupManager {
       // 按钮元素
       startBtn: document.getElementById('startBtn'),
       stopBtn: document.getElementById('stopBtn'),
-      resetBtn: document.getElementById('resetBtn'),
-      clearLogBtn: document.getElementById('clearLogBtn'),
+            clearLogBtn: document.getElementById('clearLogBtn'),
       advancedToggle: document.getElementById('advancedToggle'),
 
       // 状态元素
@@ -86,10 +82,7 @@ class PopupManager {
       this.startCleaning()
     );
     this.elements.stopBtn.addEventListener('click', () => this.stopCleaning());
-    this.elements.resetBtn.addEventListener('click', () =>
-      this.resetProgress()
-    );
-    this.elements.clearLogBtn.addEventListener('click', () => this.clearLog());
+        this.elements.clearLogBtn.addEventListener('click', () => this.clearLog());
 
     // 高级设置切换
     this.elements.advancedToggle.addEventListener('click', () => {
@@ -231,37 +224,7 @@ class PopupManager {
     }
   }
 
-  async resetProgress() {
-    try {
-      // 获取当前标签页
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      // 发送重置进度消息
-      await this.messaging.sendMessage(tab.id, {
-        type: POPUP_TO_CONTENT.RESET_PROGRESS,
-        payload: {},
-      });
-
-      // 重置本地状态
-      this.currentStats = {
-        processed: 0,
-        deleted: 0,
-        skipped: 0,
-        errors: 0,
-      };
-
-      // 更新 UI
-      this.updateStatsUI();
-      this.log('进度已重置', 'info');
-    } catch (error) {
-      this.logger.error('重置进度失败:', error);
-      this.log('重置进度失败: ' + error.message, 'error');
-    }
-  }
-
+  
   setRunningState(running) {
     this.isRunning = running;
 
@@ -275,31 +238,7 @@ class PopupManager {
     operationText.textContent = running ? '正在清理中...' : '准备就绪';
   }
 
-  async updateStatus() {
-    try {
-      // 获取当前标签页
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      // 请求状态更新
-      const response = await this.messaging.sendMessage(tab.id, {
-        type: POPUP_TO_CONTENT.GET_STATUS,
-        payload: {},
-      });
-
-      if (response) {
-        this.currentStats = response.stats || this.currentStats;
-        this.setRunningState(response.isRunning || false);
-        this.updateStatsUI();
-      }
-    } catch (error) {
-      // 如果 content script 未运行，使用默认状态
-      this.updateStatsUI();
-    }
-  }
-
+  
   updateStatsUI() {
     this.elements.processedCount.textContent = this.currentStats.processed;
     this.elements.deletedCount.textContent = this.currentStats.deleted;
@@ -394,7 +333,6 @@ class PopupManager {
       // 如果不在 Twitter/X 页面，禁用相关按钮并显示提示
       if (!isTwitterPage) {
         this.elements.startBtn.disabled = true;
-        this.elements.resetBtn.disabled = true;
         this.log('请在 Twitter 或 X.com 页面使用此扩展', 'warning');
       }
 

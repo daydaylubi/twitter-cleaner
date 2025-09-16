@@ -15,15 +15,7 @@ export const POPUP_TO_CONTENT = {
   // 接收方: Content Script (TwitterCleaner)
   STOP_CLEANING: 'STOP_CLEANING',
 
-  // 重置清理进度
-  // 发送方: Popup
-  // 接收方: Content Script (TwitterCleaner)
-  RESET_PROGRESS: 'RESET_PROGRESS',
 
-  // 获取清理状态
-  // 发送方: Popup
-  // 接收方: Content Script (TwitterCleaner)
-  GET_STATUS: 'GET_STATUS',
 };
 
 // Content Script 到 Background Script 的消息类型
@@ -56,20 +48,8 @@ export const POPUP_TO_BACKGROUND = {
   // 接收方: Background Script (BackgroundService)
   SAVE_CONFIG: 'SAVE_CONFIG',
 
-  // 获取进度
-  // 发送方: Popup
-  // 接收方: Background Script (BackgroundService)
-  GET_PROGRESS: 'GET_PROGRESS',
 
-  // 保存进度
-  // 发送方: Popup
-  // 接收方: Background Script (BackgroundService)
-  SAVE_PROGRESS: 'SAVE_PROGRESS',
 
-  // 清除进度
-  // 发送方: Popup
-  // 接收方: Background Script (BackgroundService)
-  CLEAR_PROGRESS: 'CLEAR_PROGRESS',
 
   // 获取日志
   // 发送方: Popup

@@ -35,46 +35,7 @@ export class StorageManager {
     }
   }
 
-  /**
-   * 保存进度状态
-   * @param {Object} progress - 进度对象
-   */
-  async saveProgress(progress) {
-    try {
-      await this.storage.set({ progress });
-      return true;
-    } catch (error) {
-      console.error('保存进度失败:', error);
-      throw error;
-    }
-  }
 
-  /**
-   * 获取进度状态
-   * @returns {Promise<Object>} 进度对象
-   */
-  async getProgress() {
-    try {
-      const result = await this.storage.get('progress');
-      return result.progress || this.getDefaultProgress();
-    } catch (error) {
-      console.error('获取进度失败:', error);
-      return this.getDefaultProgress();
-    }
-  }
-
-  /**
-   * 清除进度状态
-   */
-  async clearProgress() {
-    try {
-      await this.storage.remove('progress');
-      return true;
-    } catch (error) {
-      console.error('清除进度失败:', error);
-      throw error;
-    }
-  }
 
   /**
    * 保存日志
@@ -137,22 +98,4 @@ export class StorageManager {
     };
   }
 
-  /**
-   * 获取默认进度
-   * @returns {Object} 默认进度
-   */
-  getDefaultProgress() {
-    return {
-      processed: 0,
-      deleted: 0,
-      skipped: 0,
-      errors: 0,
-      scrollAttempts: 0,
-      totalElements: 0,
-      isRunning: false,
-      startTime: null,
-      endTime: null,
-      currentTweet: null
-    };
-  }
 }

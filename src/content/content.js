@@ -145,26 +145,7 @@ export class TwitterCleaner {
       }
     );
 
-    // 获取状态
-    this.messaging.registerHandler(
-      POPUP_TO_CONTENT.GET_STATUS,
-      async (payload) => {
-        return {
-          isRunning: this.isRunning,
-          stats: this.stats,
-          config: this.config,
-        };
-      }
-    );
 
-    // 重置进度
-    this.messaging.registerHandler(
-      POPUP_TO_CONTENT.RESET_PROGRESS,
-      async (payload) => {
-        await this.resetProgress();
-        return { success: true };
-      }
-    );
   }
 
   /**
@@ -219,8 +200,6 @@ export class TwitterCleaner {
       this.shouldStop = true;
       this.isRunning = false;
 
-      // 保存当前进度
-      await this.saveProgress();
 
       // 发送状态更新
       await this.sendStatusUpdate();
@@ -229,26 +208,6 @@ export class TwitterCleaner {
     }
   }
 
-  /**
-   * 重置进度
-   */
-  async resetProgress() {
-    try {
-      this.logger.info('重置进度');
-
-      this.resetStats();
-      this.processedTweetIds.clear();
-      this.currentBatch = [];
-
-      // 清除保存的进度
-      await this.storage.clearProgress();
-
-      // 发送状态更新
-      await this.sendStatusUpdate();
-    } catch (error) {
-      this.logger.error('重置进度失败:', error);
-    }
-  }
 
   /**
    * 主要的清理循环
@@ -465,8 +424,6 @@ export class TwitterCleaner {
         errors: this.stats.errors,
       });
 
-      // 保存最终进度
-      await this.saveProgress();
 
       // 发送最终状态更新
       await this.sendStatusUpdate();
@@ -492,22 +449,6 @@ export class TwitterCleaner {
     }
   }
 
-  /**
-   * 保存进度
-   */
-  async saveProgress() {
-    try {
-      const progress = {
-        stats: this.stats,
-        processedTweetIds: Array.from(this.processedTweetIds),
-        timestamp: new Date().toISOString(),
-      };
-
-      await this.storage.saveProgress(progress);
-    } catch (error) {
-      this.logger.error('保存进度失败:', error);
-    }
-  }
 
   /**
    * 重置统计数据

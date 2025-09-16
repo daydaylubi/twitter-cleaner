@@ -76,31 +76,8 @@ class BackgroundService {
       }
     );
 
-    // 获取进度
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.GET_PROGRESS,
-      async (payload) => {
-        return await this.storage.getProgress();
-      }
-    );
 
-    // 保存进度
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.SAVE_PROGRESS,
-      async (payload) => {
-        await this.storage.saveProgress(payload);
-        return { success: true };
-      }
-    );
 
-    // 清除进度
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.CLEAR_PROGRESS,
-      async (payload) => {
-        await this.storage.clearProgress();
-        return { success: true };
-      }
-    );
 
     // 获取日志
     this.messaging.registerHandler(
@@ -424,17 +401,6 @@ class BackgroundService {
     try {
       this.logger.debug('清理过期数据');
 
-      // 清理过期的进度数据（超过 7 天）
-      const progress = await this.storage.getProgress();
-      if (progress.timestamp) {
-        const progressDate = new Date(progress.timestamp);
-        const expireDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-        if (progressDate < expireDate) {
-          await this.storage.clearProgress();
-          this.logger.info('清理过期进度数据');
-        }
-      }
 
       // 清理过期的日志数据（超过 3 天）
       const logs = await this.storage.getLogs();
