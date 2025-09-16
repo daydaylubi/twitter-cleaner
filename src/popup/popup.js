@@ -28,6 +28,9 @@ class PopupManager {
       // 初始化 UI 元素
       this.initElements();
 
+      // 检查当前页面是否为 Twitter/X 网站
+      await this.checkCurrentPage();
+
       // 加载保存的配置
       await this.loadConfig();
 
@@ -188,12 +191,6 @@ class PopupManager {
         active: true,
         currentWindow: true,
       });
-
-      // 检查是否在 Twitter 页面
-      if (!tab.url.includes('twitter.com') && !tab.url.includes('x.com')) {
-        this.log('请在 Twitter 或 X.com 页面使用此扩展', 'warning');
-        return;
-      }
 
       // 获取配置
       const config = await this.storage.getConfig();
@@ -392,6 +389,35 @@ class PopupManager {
     const date = new Date();
     date.setMonth(date.getMonth() - 1);
     return date.toISOString().split('T')[0];
+  }
+
+  /**
+   * 检查当前页面是否为 Twitter/X 网站
+   */
+  async checkCurrentPage() {
+    try {
+      // 获取当前标签页
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      // 检查是否在 Twitter/X 页面
+      const isTwitterPage = tab.url.includes('twitter.com') || tab.url.includes('x.com');
+
+      // 如果不在 Twitter/X 页面，禁用相关按钮并显示提示
+      if (!isTwitterPage) {
+        this.elements.startBtn.disabled = true;
+        this.elements.resetBtn.disabled = true;
+        this.log('请在 Twitter 或 X.com 页面使用此扩展', 'warning');
+      }
+
+      return isTwitterPage;
+    } catch (error) {
+      this.logger.error('检查当前页面失败:', error);
+      // 出错时默认启用按钮，让用户可以尝试操作
+      return true;
+    }
   }
 }
 
