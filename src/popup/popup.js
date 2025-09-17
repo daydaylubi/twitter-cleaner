@@ -60,7 +60,7 @@ class PopupManager {
       // 按钮元素
       startBtn: document.getElementById('startBtn'),
       stopBtn: document.getElementById('stopBtn'),
-            clearLogBtn: document.getElementById('clearLogBtn'),
+      clearLogBtn: document.getElementById('clearLogBtn'),
       advancedToggle: document.getElementById('advancedToggle'),
 
       // 状态元素
@@ -82,7 +82,7 @@ class PopupManager {
       this.startCleaning()
     );
     this.elements.stopBtn.addEventListener('click', () => this.stopCleaning());
-        this.elements.clearLogBtn.addEventListener('click', () => this.clearLog());
+    this.elements.clearLogBtn.addEventListener('click', () => this.clearLog());
 
     // 高级设置切换
     this.elements.advancedToggle.addEventListener('click', () => {
@@ -92,8 +92,10 @@ class PopupManager {
         : 'block';
 
       // 更新按钮文本和图标
-      const toggleText = this.elements.advancedToggle.querySelector('span:first-child');
-      const toggleIcon = this.elements.advancedToggle.querySelector('span:last-child');
+      const toggleText =
+        this.elements.advancedToggle.querySelector('span:first-child');
+      const toggleIcon =
+        this.elements.advancedToggle.querySelector('span:last-child');
 
       if (isVisible) {
         toggleText.textContent = '🔧 高级设置';
@@ -224,7 +226,6 @@ class PopupManager {
     }
   }
 
-  
   setRunningState(running) {
     this.isRunning = running;
 
@@ -238,7 +239,6 @@ class PopupManager {
     operationText.textContent = running ? '正在清理中...' : '准备就绪';
   }
 
-  
   updateStatsUI() {
     this.elements.processedCount.textContent = this.currentStats.processed;
     this.elements.deletedCount.textContent = this.currentStats.deleted;
@@ -328,7 +328,8 @@ class PopupManager {
       });
 
       // 检查是否在 Twitter/X 页面
-      const isTwitterPage = tab.url.includes('twitter.com') || tab.url.includes('x.com');
+      const isTwitterPage =
+        tab.url.includes('twitter.com') || tab.url.includes('x.com');
 
       // 如果不在 Twitter/X 页面，禁用相关按钮并显示提示
       if (!isTwitterPage) {
@@ -347,5 +348,22 @@ class PopupManager {
 
 // 当 DOM 加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
-  new PopupManager();
+  /**
+   * Chrome 的 popup 页面生命周期很特殊：当你点扩展图标时，它会创建一个全新的 popup.html 页面，失焦时销毁。
+   *
+   * 一旦你打开 popup 的 DevTools，Chrome 会「热重载」popup 页面一次，确保调试器能捕捉到脚本。
+   *
+   * 结果就是：
+   *
+   * 同一个 window 下，popup.js 被加载两次。
+   *
+   * DOMContentLoaded 回调也会注册两次并触发两次。
+   *
+   * 于是 PopupManager 就被实例化了两次。
+   *
+   * 因此需要单例保护。
+   */
+  if (!window.__popupManager) {
+    window.__popupManager = new PopupManager();
+  }
 });
