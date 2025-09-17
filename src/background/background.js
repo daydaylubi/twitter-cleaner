@@ -72,7 +72,6 @@ class BackgroundService {
       POPUP_TO_BACKGROUND.SAVE_CONFIG,
       async (payload) => {
         await this.storage.saveConfig(payload);
-        return { success: true };
       }
     );
 
@@ -92,7 +91,6 @@ class BackgroundService {
       POPUP_TO_BACKGROUND.CLEAR_LOGS,
       async (payload) => {
         await this.storage.clearLogs();
-        return { success: true };
       }
     );
 
@@ -102,16 +100,10 @@ class BackgroundService {
       CONTENT_TO_BACKGROUND.LOG_MESSAGE,
       async (payload) => {
         // 转发日志消息到 popup
-        try {
-          await this.messaging.sendToRuntime({
-            type: BACKGROUND_TO_POPUP.LOG_MESSAGE,
-            payload,
-          });
-        } catch (error) {
-          console.error('转发日志消息失败:', error);
-        }
-
-        return { success: true };
+        await this.messaging.sendToRuntime({
+          type: BACKGROUND_TO_POPUP.LOG_MESSAGE,
+          payload,
+        });
       }
     );
 
@@ -120,16 +112,10 @@ class BackgroundService {
       CONTENT_TO_BACKGROUND.PROGRESS_UPDATE,
       async (payload) => {
         // 转发进度更新到 popup
-        try {
-          await this.messaging.sendToRuntime({
-            type: BACKGROUND_TO_POPUP.PROGRESS_UPDATE,
-            payload,
-          });
-        } catch (error) {
-          console.error('转发进度更新失败:', error);
-        }
-
-        return { success: true };
+        await this.messaging.sendToRuntime({
+          type: BACKGROUND_TO_POPUP.PROGRESS_UPDATE,
+          payload,
+        });
       }
     );
 
@@ -138,16 +124,10 @@ class BackgroundService {
       CONTENT_TO_BACKGROUND.CLEANUP_COMPLETE,
       async (payload) => {
         // 转发清理完成消息到 popup
-        try {
-          await this.messaging.sendToRuntime({
-            type: BACKGROUND_TO_POPUP.CLEANUP_COMPLETE,
-            payload,
-          });
-        } catch (error) {
-          console.error('转发清理完成消息失败:', error);
-        }
-
-        return { success: true };
+        await this.messaging.sendToRuntime({
+          type: BACKGROUND_TO_POPUP.CLEANUP_COMPLETE,
+          payload,
+        });
       }
     );
   }

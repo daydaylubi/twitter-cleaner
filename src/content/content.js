@@ -132,7 +132,6 @@ export class TwitterCleaner {
       POPUP_TO_CONTENT.START_CLEANING,
       async (payload) => {
         this.startCleaning(payload);
-        return { success: true };
       }
     );
 
@@ -141,7 +140,6 @@ export class TwitterCleaner {
       POPUP_TO_CONTENT.STOP_CLEANING,
       async (payload) => {
         this.stopCleaning();
-        return { success: true };
       }
     );
   }

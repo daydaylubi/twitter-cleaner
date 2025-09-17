@@ -256,7 +256,6 @@ class PopupManager {
         if (this.isRunning) {
           this.log(payload.message, payload.level);
         }
-        return { success: true };
       }
     );
 
@@ -267,7 +266,6 @@ class PopupManager {
         if (this.isRunning) {
           this.handleProgressUpdate(payload);
         }
-        return { success: true };
       }
     );
 
@@ -278,7 +276,6 @@ class PopupManager {
         if (this.isRunning) {
           this.handleCleanupComplete(payload);
         }
-        return { success: true };
       }
     );
   }
