@@ -49,8 +49,7 @@ export class MessageManager {
         sendResponse({ success: false, error: error.message });
       }
     } else {
-      // 未找到消息处理器时，记录警告日志并发送空响应
-      console.warn(`未找到消息处理器: ${type}`);
+      console.info(`无需处理的消息类型: ${type}`);
       sendResponse();
     }
   }
