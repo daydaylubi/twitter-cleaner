@@ -53,15 +53,17 @@
 - 提供日期选择器组件
 - 推文类型选择器（推文、转推、回复、引用）
 - 启动/停止控制按钮
-- 实时进度显示
+- 实时进度显示（已处理、已删除、跳过、错误数量）
 - 执行日志展示
 - 用户配置管理
+- 高级设置面板（删除间隔、滚动间隔、最大处理数量、调试模式）
+- 当前操作状态显示
 
 **技术实现**:
-- 使用原生 HTML/CSS/JavaScript 或 React
+- 使用原生 HTML/CSS/JavaScript
 - 响应式设计，适配不同屏幕尺寸
-- 支持深色模式
 - 使用 Chrome Storage API 保存配置
+- 消息通信机制与 Content Script 和 Background Script 交互
 
 #### 2.2.2 Content Script 模块
 **职责**: 在 Twitter 页面执行清理操作
@@ -70,12 +72,16 @@
 - 自动滚动加载更多推文
 - 进度状态同步
 - 错误处理和恢复
+- 连续空页面检测停止机制
+- 推文去重处理
 
 **技术实现**:
 - 基于现有 cleaner.js 逻辑重构
-- 使用 MutationObserver 监听页面变化
+- 使用 TweetDetector 类进行推文识别和分类
+- 使用 TweetDeleter 类执行不同类型的删除操作
 - 实现智能滚动和元素定位
 - 优化删除操作的成功率
+- 批量处理机制，避免一次性处理过多推文
 
 #### 2.2.3 Background Script 模块
 **职责**: 后台状态管理和消息中转
@@ -83,24 +89,30 @@
 - 消息路由和分发
 - 权限管理
 - 存储访问控制
+- 日志管理（存储和清理）
+- 扩展生命周期管理（安装、更新、启动）
 
 **技术实现**:
 - Chrome Extension Service Worker
 - 消息通信管理
 - 状态持久化
 - 错误监控
+- 定期清理过期数据
+- 标签页状态管理
 
 #### 2.2.4 Storage 模块
 **职责**: 用户配置和执行状态持久化
 - 用户设置存储
 - 执行状态缓存
-- 历史记录管理
+- 日志存储
+- 过期数据清理
 
 **技术实现**:
 - Chrome Storage API
 - 数据结构设计
 - 缓存策略
 - 数据同步机制
+- 定期清理过期日志（超过3天）
 
 ## 3. 数据流设计
 
@@ -121,12 +133,12 @@
   payload: {
     cutoffDate: '2025-08-01',
     tweetTypes: ['TWEET', 'RETWEET', 'REPLY', 'QUOTE'],
-    config: {
-      deleteDelay: 2000,
-      scrollDelay: 3000,
-      maxTweets: 10000,
-      debug: true
-    }
+    deleteDelay: 2000,
+    scrollDelay: 3000,
+    maxTweets: 10000,
+    maxScrollAttempts: 50,
+    emptyPageStopThreshold: 5,
+    debugMode: false
   }
 }
 
@@ -135,65 +147,97 @@
   type: 'STOP_CLEANING',
   payload: {}
 }
-
-// 获取状态
-{
-  type: 'GET_STATUS',
-  payload: {}
-}
 ```
 
 #### 3.2.2 状态消息
 ```javascript
-// Content Script → Popup
+// Content Script → Background Script → Popup (转发)
 {
-  type: 'PROGRESS_UPDATE',
+  type: 'CONTENT_PROGRESS_UPDATE',
   payload: {
-    processed: 100,
-    deleted: 85,
-    skipped: 10,
-    errors: 5,
-    isRunning: true,
+    stats: {
+      processed: 100,
+      deleted: 85,
+      skipped: 10,
+      errors: 5,
+      scrollAttempts: 3,
+      totalElements: 0
+    },
     currentTweet: {
       id: '123456789',
       type: 'TWEET',
-      date: '2025-07-15',
-      text: '推文内容预览...'
+      date: '2025-07-15T12:00:00Z',
+      text: '推文内容预览...',
+      element: '[object HTMLElement]'
     }
   }
 }
 
 // 日志消息
 {
-  type: 'LOG_MESSAGE',
+  type: 'CONTENT_LOG_MESSAGE',
   payload: {
-    level: 'info|success|warning|error|debug',
+    level: 'info',
     message: '处理进度信息',
+    component: 'ContentScript',
     timestamp: '2025-01-01T12:00:00Z'
+  }
+}
+
+// 清理完成消息
+{
+  type: 'CONTENT_CLEANUP_COMPLETE',
+  payload: {
+    stats: {
+      processed: 100,
+      deleted: 85,
+      skipped: 10,
+      errors: 5,
+      scrollAttempts: 3,
+      totalElements: 0
+    }
   }
 }
 ```
 
-#### 3.2.3 配置消息
+#### 3.2.3 配置和状态消息
 ```javascript
-// 保存配置
+// Popup → Background Script (获取扩展状态)
+{
+  type: 'GET_EXTENSION_STATUS',
+  payload: {}
+}
+
+// Popup → Background Script (获取配置)
+{
+  type: 'GET_CONFIG',
+  payload: {}
+}
+
+// Popup → Background Script (保存配置)
 {
   type: 'SAVE_CONFIG',
   payload: {
     cutoffDate: '2025-08-01',
     tweetTypes: ['TWEET', 'RETWEET'],
-    advancedConfig: {
-      deleteDelay: 2000,
-      scrollDelay: 3000,
-      maxTweets: 10000,
-      debug: false
-    }
+    deleteDelay: 2000,
+    scrollDelay: 3000,
+    maxTweets: 10000,
+    maxScrollAttempts: 50,
+    emptyPageStopThreshold: 5,
+    debugMode: false
   }
 }
 
-// 加载配置
+// Popup → Background Script (获取日志)
 {
-  type: 'LOAD_CONFIG',
+  type: 'GET_LOGS',
+  payload: {}
+}
+
+// Popup → Background Script (清除日志)
+{
+  type: 'CLEAR_LOGS',
   payload: {}
 }
 ```
@@ -207,6 +251,8 @@
   "name": "Twitter Cleaner",
   "version": "1.0.0",
   "description": "批量清理 Twitter 历史推文的 Chrome 扩展",
+  "author": "Twitter Cleaner Team",
+  "homepage_url": "https://github.com/yourusername/twitter-cleaner",
   "permissions": [
     "storage",
     "activeTab",
@@ -220,9 +266,9 @@
     "default_popup": "popup.html",
     "default_title": "Twitter Cleaner",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "assets/icons/icon16.svg",
+      "48": "assets/icons/icon48.svg",
+      "128": "assets/icons/icon128.svg"
     }
   },
   "background": {
@@ -230,20 +276,30 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "*://*.twitter.com/*",
+        "*://*.x.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_end"
     }
   ],
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "assets/icons/icon16.svg",
+    "48": "assets/icons/icon48.svg",
+    "128": "assets/icons/icon128.svg"
   },
   "web_accessible_resources": [
     {
-      "resources": ["assets/*"],
-      "matches": ["*://*.twitter.com/*", "*://*.x.com/*"]
+      "resources": [
+        "assets/*"
+      ],
+      "matches": [
+        "*://*.twitter.com/*",
+        "*://*.x.com/*"
+      ]
     }
   ]
 }
@@ -252,74 +308,152 @@
 ### 4.2 核心代码结构
 
 #### 4.2.1 Popup 界面结构
-```javascript
-// popup.html
+```html
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Twitter Cleaner</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <h1>Twitter Cleaner</h1>
+      <p class="subtitle">批量清理 Twitter 历史推文</p>
+    </div>
+
     <!-- 设置区域 -->
-    <div class="settings-section">
-      <h3>清理设置</h3>
+    <div class="card">
+      <h3 class="card-title">
+        <span>⚙️</span>
+        清理设置
+      </h3>
+
+      <!-- 截止日期 -->
       <div class="form-group">
-        <label>截止日期</label>
-        <input type="date" id="cutoffDate">
+        <label for="cutoffDate">📅 截止日期</label>
+        <input type="date" id="cutoffDate" name="cutoffDate">
+        <small>删除此日期之前的所有推文</small>
       </div>
+
+      <!-- 推文类型 -->
       <div class="form-group">
-        <label>推文类型</label>
+        <label>🗨️ 推文类型</label>
         <div class="checkbox-group">
-          <label><input type="checkbox" value="TWEET" checked> 推文</label>
-          <label><input type="checkbox" value="RETWEET" checked> 转推</label>
-          <label><input type="checkbox" value="REPLY" checked> 回复</label>
-          <label><input type="checkbox" value="QUOTE" checked> 引用</label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="TWEET" checked>
+            <span class="checkmark"></span>
+            推文
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="RETWEET" checked>
+            <span class="checkmark"></span>
+            转推
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="REPLY" checked>
+            <span class="checkmark"></span>
+            回复
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tweetTypes" value="QUOTE" checked>
+            <span class="checkmark"></span>
+            引用
+          </label>
+        </div>
+      </div>
+
+      <!-- 高级设置 -->
+      <div class="form-group">
+        <button type="button" id="advancedToggle" class="btn-link">
+          <span>🔧 高级设置</span>
+          <span>▼</span>
+        </button>
+        <div id="advancedSettings" class="advanced-settings" style="display: none;">
+          <div class="setting-item">
+            <label for="deleteDelay">⏱️ 删除间隔 (毫秒)</label>
+            <input type="number" id="deleteDelay" value="2000" min="500" max="10000">
+          </div>
+          <div class="setting-item">
+            <label for="scrollDelay">🖱️ 滚动间隔 (毫秒)</label>
+            <input type="number" id="scrollDelay" value="3000" min="1000" max="10000">
+          </div>
+          <div class="setting-item">
+            <label for="maxTweets">📊 最大处理数量</label>
+            <input type="number" id="maxTweets" value="10000" min="100" max="50000">
+          </div>
+          <div class="setting-item">
+            <label class="checkbox-label">
+              <input type="checkbox" id="debugMode">
+              <span class="checkmark"></span>
+              🐞 调试模式
+            </label>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- 控制区域 -->
     <div class="control-section">
-      <button id="startBtn" class="btn btn-primary">开始清理</button>
-      <button id="stopBtn" class="btn btn-danger" disabled>停止清理</button>
+      <button id="startBtn" class="btn btn-primary">
+        <span class="btn-icon">▶</span>
+        开始清理
+      </button>
+      <button id="stopBtn" class="btn btn-danger" disabled>
+        <span class="btn-icon">⏸</span>
+        停止清理
+      </button>
     </div>
 
     <!-- 状态区域 -->
-    <div class="status-section">
+    <div class="card status-section">
+      <h3 class="card-title">
+        <span>📊</span>
+        执行状态
+      </h3>
+
+      <!-- 进度信息 -->
       <div class="progress-info">
         <div class="progress-item">
-          <span>已处理:</span>
-          <span id="processedCount">0</span>
+          <span class="label">已处理</span>
+          <span class="value" id="processedCount">0</span>
         </div>
         <div class="progress-item">
-          <span>已删除:</span>
-          <span id="deletedCount">0</span>
+          <span class="label">已删除</span>
+          <span class="value" id="deletedCount">0</span>
         </div>
         <div class="progress-item">
-          <span>跳过:</span>
-          <span id="skippedCount">0</span>
+          <span class="label">跳过</span>
+          <span class="value" id="skippedCount">0</span>
         </div>
         <div class="progress-item">
-          <span>错误:</span>
-          <span id="errorsCount">0</span>
+          <span class="label">错误</span>
+          <span class="value" id="errorsCount">0</span>
         </div>
       </div>
-      
-      <!-- 进度条 -->
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
+
+      <!-- 当前操作 -->
+      <div class="current-operation" id="currentOperation">
+        <span class="operation-text">准备就绪</span>
       </div>
 
       <!-- 日志区域 -->
       <div class="log-section">
-        <h4>执行日志</h4>
+        <div class="log-header">
+          <h4>
+            <span>📋</span>
+            执行日志
+          </h4>
+          <button id="clearLogBtn" class="btn-link">清除日志</button>
+        </div>
         <div id="logContainer" class="log-container"></div>
       </div>
     </div>
   </div>
+
   <script src="popup.js"></script>
 </body>
 </html>
@@ -328,82 +462,235 @@
 #### 4.2.2 Content Script 核心逻辑
 ```javascript
 // content.js
+import { TweetDetector } from './tweet-detector.js';
+import { TweetDeleter } from './deleter.js';
+import { StorageManager } from '../utils/storage.js';
+import { MessageManager } from '../utils/messaging.js';
+import {
+  POPUP_TO_CONTENT,
+  CONTENT_TO_BACKGROUND,
+} from '../utils/message-types.js';
+import { Logger, createLogger } from '../utils/logger.js';
+
 class TwitterCleaner {
   constructor() {
+    this.logger = createLogger('TwitterCleaner');
+    this.storage = new StorageManager();
+    this.messaging = new MessageManager();
+    this.detector = new TweetDetector();
+    this.deleter = null;
+
+    // 运行状态
+    this.isRunning = false;
+    this.shouldStop = false;
+
+    // 统计数据
+    this.stats = {
+      processed: 0,
+      deleted: 0,
+      skipped: 0,
+      errors: 0,
+      scrollAttempts: 0,
+      totalElements: 0,
+    };
+
+    // 配置
     this.config = {
       cutoffDate: new Date('2025-08-01'),
       tweetTypes: ['TWEET', 'RETWEET', 'REPLY', 'QUOTE'],
       deleteDelay: 2000,
       scrollDelay: 3000,
       maxTweets: 10000,
-      debug: false
+      maxScrollAttempts: 50,
+      emptyPageStopThreshold: 5,
+      debug: false,
     };
-    
-    this.stats = {
-      processed: 0,
-      deleted: 0,
-      skipped: 0,
-      errors: 0,
-      scrollAttempts: 0
-    };
-    
-    this.isRunning = false;
+
+    // 处理状态
     this.processedTweetIds = new Set();
     this.currentBatch = [];
-    
+
     this.init();
   }
 
-  init() {
-    // 监听来自 popup 的消息
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      this.handleMessage(message, sendResponse);
-    });
-  }
+  async init() {
+    try {
+      this.logger.info('Twitter Cleaner 初始化开始');
 
-  handleMessage(message, sendResponse) {
-    switch (message.type) {
-      case 'START_CLEANING':
-        this.startCleaning(message.payload);
-        break;
-      case 'STOP_CLEANING':
-        this.stopCleaning();
-        break;
-      case 'GET_STATUS':
-        sendResponse({
-          isRunning: this.isRunning,
-          stats: this.stats,
-          config: this.config
-        });
-        break;
+      // 检查是否在 Twitter 页面
+      if (!this.isTwitterPage()) {
+        this.logger.warning('不在 Twitter 页面，跳过初始化');
+        return;
+      }
+
+      // 加载保存的配置
+      await this.loadConfig();
+
+      // 设置消息处理器
+      this.setupMessageHandlers();
+
+      // 等待页面加载完成
+      await this.waitForPageReady();
+
+      this.logger.info('Twitter Cleaner 初始化完成');
+    } catch (error) {
+      this.logger.error('初始化失败:', error);
     }
   }
 
-  async startCleaning(config) {
-    if (this.isRunning) return;
-    
-    this.config = { ...this.config, ...config };
-    this.isRunning = true;
-    this.resetStats();
-    
-    this.sendStatusUpdate();
-    
+  setupMessageHandlers() {
+    // 开始清理
+    this.messaging.registerHandler(
+      POPUP_TO_CONTENT.START_CLEANING,
+      async (payload) => {
+        this.startCleaning(payload);
+      }
+    );
+
+    // 停止清理
+    this.messaging.registerHandler(
+      POPUP_TO_CONTENT.STOP_CLEANING,
+      async (payload) => {
+        this.stopCleaning();
+      }
+    );
+  }
+
+  async startCleaning(config = {}) {
+    if (this.isRunning) {
+      this.logger.info('清理已在进行中');
+      return;
+    }
+
     try {
+      this.logger.info('开始清理推文');
+
+      // 更新配置
+      this.config = { ...this.config, ...config };
+      if (typeof this.config.cutoffDate === 'string') {
+        this.config.cutoffDate = new Date(this.config.cutoffDate);
+      }
+
+      // 重置状态
+      this.isRunning = true;
+      this.shouldStop = false;
+      this.resetStats();
+
+      // 重置全局状态
+      this.processedTweetIds.clear();
+      this.currentBatch = [];
+
+      // 删除器实例
+      this.deleter = new TweetDeleter(this.config);
+
+      // 发送状态更新
+      await this.sendStatusUpdate();
+
+      // 开始清理过程
       await this.cleanupTweets();
     } catch (error) {
-      this.log(`清理过程出错: ${error.message}`, 'error');
-    } finally {
+      this.logger.error('启动清理失败:', error);
       this.isRunning = false;
-      this.sendStatusUpdate();
+      await this.sendStatusUpdate();
     }
   }
 
-  stopCleaning() {
-    this.isRunning = false;
-    this.log('清理已停止', 'warning');
+  async stopCleaning() {
+    if (!this.isRunning) {
+      this.logger.info('清理未在进行中');
+      return;
+    }
+
+    try {
+      this.logger.info('停止清理');
+      this.shouldStop = true;
+      this.isRunning = false;
+
+      // 发送状态更新
+      await this.sendStatusUpdate();
+    } catch (error) {
+      this.logger.error('停止清理失败:', error);
+    }
   }
 
-  // 其他核心方法基于现有 cleaner.js 重构...
+  async cleanupTweets() {
+    this.logger.info('开始执行清理循环');
+
+    // 滚动到页面顶部
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    // 等待滚动完成
+    await this.sleep(1000);
+
+    let consecutiveEmptyPages = 0;
+
+    while (
+      this.isRunning &&
+      !this.shouldStop &&
+      this.stats.scrollAttempts < this.config.maxScrollAttempts &&
+      this.stats.processed < this.config.maxTweets
+    ) {
+      try {
+        // 构建当前批次
+        const batchSize = this.buildCurrentBatch();
+
+        if (batchSize === 0) {
+          consecutiveEmptyPages++;
+          const message1 = `页面无推文，尝试滚动加载 (${consecutiveEmptyPages}/${this.config.emptyPageStopThreshold})`;
+          this.logger.info(message1);
+          await this.sendLog('info', message1);
+
+          if (consecutiveEmptyPages >= this.config.emptyPageStopThreshold) {
+            const message2 = '连续多次页面为空，可能账号无内容，停止清理';
+            this.logger.info(message2);
+            await this.sendLog('info', message2);
+            break;
+          }
+
+          // 滚动加载更多推文
+          const hasMore = await this.scrollDown();
+          if (hasMore) {
+            consecutiveEmptyPages = 0;
+          }
+
+          this.stats.scrollAttempts++;
+          continue;
+        }
+
+        // 处理当前批次
+        const result = await this.processCurrentBatch();
+
+        if (result === 'stopped') {
+          break;
+        }
+
+        consecutiveEmptyPages = 0;
+
+        // 定期发送状态更新
+        if (this.stats.processed % 10 === 0) {
+          await this.sendStatusUpdate();
+        }
+
+        // 短暂延迟避免过快操作
+        await this.sleep(500);
+      } catch (error) {
+        this.logger.error('清理循环出错:', error);
+        this.stats.errors++;
+
+        if (this.stats.errors > 10) {
+          this.logger.error('错误次数过多，停止清理');
+          break;
+        }
+      }
+    }
+
+    // 清理完成
+    await this.cleanupComplete();
+  }
+
+  // 其他核心方法...
 }
 ```
 
@@ -415,24 +702,14 @@ const userConfig = {
   // 基础设置
   cutoffDate: '2025-08-01',
   tweetTypes: ['TWEET', 'RETWEET', 'REPLY', 'QUOTE'],
-  
+
   // 高级设置
-  advancedConfig: {
-    deleteDelay: 2000,
-    scrollDelay: 3000,
-    maxTweets: 10000,
-    maxScrollAttempts: 50,
-    emptyPageStopThreshold: 5,
-    debug: false
-  },
-  
-  // 界面设置
-  uiConfig: {
-    darkMode: false,
-    autoScroll: true,
-    showProgress: true,
-    logLevel: 'info'
-  }
+  deleteDelay: 2000,
+  scrollDelay: 3000,
+  maxTweets: 10000,
+  maxScrollAttempts: 50,
+  emptyPageStopThreshold: 5,
+  debugMode: false
 };
 ```
 
@@ -452,11 +729,9 @@ const executionState = {
     id: '',
     type: '',
     date: '',
-    text: ''
-  },
-  startTime: null,
-  endTime: null,
-  logs: []
+    text: '',
+    element: '[object HTMLElement]'
+  }
 };
 ```
 
@@ -471,7 +746,7 @@ const executionState = {
 - 所有操作在用户本地浏览器完成
 - 不上传任何用户数据到外部服务器
 - 使用 Chrome Storage API 进行本地存储
-- 实现数据加密存储敏感配置
+- 配置数据存储在用户本地，不进行加密存储
 
 ### 5.3 操作安全
 - 明确的用户授权流程
@@ -501,25 +776,25 @@ const executionState = {
 
 ### 7.1 开发阶段
 
-#### 第一阶段：基础框架（2周）
-- [ ] 创建 Chrome Extension 基础结构
-- [ ] 实现 Popup 界面
-- [ ] 搭建消息通信框架
-- [ ] 实现基础配置管理
+#### 第一阶段：基础框架（已完成）
+- [x] 创建 Chrome Extension 基础结构
+- [x] 实现 Popup 界面
+- [x] 搭建消息通信框架
+- [x] 实现基础配置管理
 
-#### 第二阶段：核心功能（3周）
-- [ ] 移植推文识别逻辑
-- [ ] 实现删除操作功能
-- [ ] 添加进度跟踪功能
-- [ ] 完善错误处理机制
+#### 第二阶段：核心功能（已完成）
+- [x] 移植推文识别逻辑
+- [x] 实现删除操作功能
+- [x] 添加进度跟踪功能
+- [x] 完善错误处理机制
 
-#### 第三阶段：高级功能（2周）
-- [ ] 实现自动滚动功能
-- [ ] 添加历史记录功能
-- [ ] 优化用户界面
-- [ ] 添加深色模式支持
+#### 第三阶段：高级功能（已完成）
+- [x] 实现自动滚动功能
+- [x] 添加连续空页面检测停止机制
+- [x] 优化用户界面
+- [x] 添加高级设置面板
 
-#### 第四阶段：测试优化（1周）
+#### 第四阶段：测试优化（进行中）
 - [ ] 全面的功能测试
 - [ ] 性能优化
 - [ ] 用户体验优化
