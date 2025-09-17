@@ -348,6 +348,9 @@ export class TwitterCleaner {
         return 'skipped';
       }
 
+      // 发送进度更新，前端展示正在处理的推特信息
+      await this.sendStatusUpdate(tweetInfo);
+
       // 执行删除操作
       const success = await this.deleter.deleteTweet(
         tweetInfo.element,
@@ -366,7 +369,7 @@ export class TwitterCleaner {
       }
 
       // 发送进度更新
-      await this.sendStatusUpdate(tweetInfo);
+      await this.sendStatusUpdate();
 
       return success ? 'deleted' : 'failed';
     } catch (error) {
