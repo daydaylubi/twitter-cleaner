@@ -131,7 +131,7 @@ export class TwitterCleaner {
     this.messaging.registerHandler(
       POPUP_TO_CONTENT.START_CLEANING,
       async (payload) => {
-        await this.startCleaning(payload);
+        this.startCleaning(payload);
         return { success: true };
       }
     );
@@ -140,12 +140,10 @@ export class TwitterCleaner {
     this.messaging.registerHandler(
       POPUP_TO_CONTENT.STOP_CLEANING,
       async (payload) => {
-        await this.stopCleaning();
+        this.stopCleaning();
         return { success: true };
       }
     );
-
-
   }
 
   /**
@@ -200,14 +198,12 @@ export class TwitterCleaner {
       this.shouldStop = true;
       this.isRunning = false;
 
-
       // 发送状态更新
       await this.sendStatusUpdate();
     } catch (error) {
       this.logger.error('停止清理失败:', error);
     }
   }
-
 
   /**
    * 主要的清理循环
@@ -424,7 +420,6 @@ export class TwitterCleaner {
         errors: this.stats.errors,
       });
 
-
       // 发送最终状态更新
       await this.sendStatusUpdate();
     } catch (error) {
@@ -448,7 +443,6 @@ export class TwitterCleaner {
       this.logger.error('发送状态更新失败:', error);
     }
   }
-
 
   /**
    * 重置统计数据
