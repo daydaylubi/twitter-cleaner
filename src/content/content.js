@@ -151,7 +151,7 @@ export class TwitterCleaner {
    */
   async startCleaning(config = {}) {
     if (this.isRunning) {
-      this.logger.warning('清理已在进行中');
+      this.logger.info('清理已在进行中');
       return;
     }
 
@@ -189,7 +189,7 @@ export class TwitterCleaner {
    */
   async stopCleaning() {
     if (!this.isRunning) {
-      this.logger.warning('清理未在进行中');
+      this.logger.info('清理未在进行中');
       return;
     }
 
