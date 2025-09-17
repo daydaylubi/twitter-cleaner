@@ -211,6 +211,14 @@ export class TwitterCleaner {
   async cleanupTweets() {
     this.logger.info('开始执行清理循环');
 
+    // 滚动到页面顶部
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    // 等待滚动完成
+    await this.sleep(1000);
+
     let consecutiveEmptyPages = 0;
 
     while (
