@@ -225,7 +225,7 @@ export class TwitterCleaner {
 
         if (batchSize === 0) {
           consecutiveEmptyPages++;
-          this.logger.warning(
+          this.logger.info(
             `页面无推文，尝试滚动加载 (${consecutiveEmptyPages}/${this.config.emptyPageStopThreshold})`
           );
 
