@@ -35,8 +35,6 @@ export class StorageManager {
     }
   }
 
-
-
   /**
    * 保存日志
    * @param {Array} logs - 日志数组
@@ -85,7 +83,7 @@ export class StorageManager {
   getDefaultConfig() {
     const date = new Date();
     date.setMonth(date.getMonth() - 1);
-    
+
     return {
       cutoffDate: date.toISOString().split('T')[0],
       tweetTypes: ['TWEET', 'RETWEET', 'REPLY', 'QUOTE'],
@@ -94,8 +92,7 @@ export class StorageManager {
       maxTweets: 10000,
       maxScrollAttempts: 50,
       emptyPageStopThreshold: 5,
-      debugMode: false
+      debugMode: false,
     };
   }
-
 }

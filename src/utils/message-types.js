@@ -14,8 +14,6 @@ export const POPUP_TO_CONTENT = {
   // 发送方: Popup
   // 接收方: Content Script (TwitterCleaner)
   STOP_CLEANING: 'STOP_CLEANING',
-
-
 };
 
 // Content Script 到 Background Script 的消息类型
@@ -53,9 +51,6 @@ export const POPUP_TO_BACKGROUND = {
   // 接收方: Background Script (BackgroundService)
   SAVE_CONFIG: 'SAVE_CONFIG',
 
-
-
-
   // 获取日志
   // 发送方: Popup
   // 接收方: Background Script (BackgroundService)
@@ -65,7 +60,6 @@ export const POPUP_TO_BACKGROUND = {
   // 发送方: Popup
   // 接收方: Background Script (BackgroundService)
   CLEAR_LOGS: 'CLEAR_LOGS',
-
 };
 
 // Background Script 到 Popup 的消息类型

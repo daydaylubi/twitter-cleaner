@@ -6,7 +6,7 @@ import {
   POPUP_TO_CONTENT,
   CONTENT_TO_BACKGROUND,
 } from '../utils/message-types.js';
-import { Logger, createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 
 /**
  * Twitter Cleaner - 主要的清理逻辑类
@@ -136,12 +136,9 @@ export class TwitterCleaner {
     );
 
     // 停止清理
-    this.messaging.registerHandler(
-      POPUP_TO_CONTENT.STOP_CLEANING,
-      async (payload) => {
-        this.stopCleaning();
-      }
-    );
+    this.messaging.registerHandler(POPUP_TO_CONTENT.STOP_CLEANING, async () => {
+      this.stopCleaning();
+    });
   }
 
   /**
@@ -216,7 +213,7 @@ export class TwitterCleaner {
     // 滚动到页面顶部
     window.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
     // 等待滚动完成
     await this.sleep(1000);

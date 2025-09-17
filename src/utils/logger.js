@@ -88,7 +88,7 @@ export class Logger {
       level,
       component: this.component,
       message,
-      args: args.length > 0 ? args : undefined
+      args: args.length > 0 ? args : undefined,
     };
 
     // 控制台输出
@@ -112,9 +112,9 @@ export class Logger {
       debug: 0,
       info: 1,
       warning: 2,
-      error: 3
+      error: 3,
     };
-    
+
     return levels[level] >= levels[this.logLevel];
   }
 
@@ -127,7 +127,7 @@ export class Logger {
   logToConsole(level, message, ...args) {
     const timestamp = new Date().toLocaleTimeString();
     const prefix = `[${timestamp}] [${this.component}]`;
-    
+
     switch (level) {
       case 'debug':
         console.debug(prefix, message, ...args);
@@ -155,16 +155,16 @@ export class Logger {
       // 获取现有日志
       const result = await chrome.storage.local.get('logs');
       const logs = result.logs || [];
-      
+
       // 添加新日志
       logs.push(logEntry);
-      
+
       // 限制日志数量
       const maxLogs = 1000;
       if (logs.length > maxLogs) {
         logs.splice(0, logs.length - maxLogs);
       }
-      
+
       // 保存日志
       await chrome.storage.local.set({ logs });
     } catch (error) {
@@ -205,24 +205,24 @@ export class Logger {
    */
   async time(operation, fn) {
     const startTime = performance.now();
-    
+
     try {
       this.debug(`开始操作: ${operation}`);
-      
+
       const result = await fn();
-      
+
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       this.info(`操作完成: ${operation} (${duration.toFixed(2)}ms)`);
-      
+
       return result;
     } catch (error) {
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       this.error(`操作失败: ${operation} (${duration.toFixed(2)}ms)`, error);
-      
+
       throw error;
     }
   }
@@ -235,7 +235,7 @@ export const LogLevel = {
   DEBUG: 'debug',
   INFO: 'info',
   WARNING: 'warning',
-  ERROR: 'error'
+  ERROR: 'error',
 };
 
 /**

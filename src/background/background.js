@@ -5,7 +5,7 @@ import {
   BACKGROUND_TO_POPUP,
   CONTENT_TO_BACKGROUND,
 } from '../utils/message-types.js';
-import { Logger, createLogger } from '../utils/logger.js';
+import { createLogger } from '../utils/logger.js';
 
 /**
  * Background Script - Chrome 扩展后台服务
@@ -50,7 +50,7 @@ class BackgroundService {
     // 获取扩展状态
     this.messaging.registerHandler(
       POPUP_TO_BACKGROUND.GET_EXTENSION_STATUS,
-      async (payload) => {
+      async () => {
         return {
           version: chrome.runtime.getManifest().version,
           activeTabs: this.activeTabs.size,
@@ -60,12 +60,9 @@ class BackgroundService {
     );
 
     // 获取配置
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.GET_CONFIG,
-      async (payload) => {
-        return await this.storage.getConfig();
-      }
-    );
+    this.messaging.registerHandler(POPUP_TO_BACKGROUND.GET_CONFIG, async () => {
+      return await this.storage.getConfig();
+    });
 
     // 保存配置
     this.messaging.registerHandler(
@@ -75,25 +72,15 @@ class BackgroundService {
       }
     );
 
-
-
-
     // 获取日志
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.GET_LOGS,
-      async (payload) => {
-        return await this.storage.getLogs();
-      }
-    );
+    this.messaging.registerHandler(POPUP_TO_BACKGROUND.GET_LOGS, async () => {
+      return await this.storage.getLogs();
+    });
 
     // 清除日志
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.CLEAR_LOGS,
-      async (payload) => {
-        await this.storage.clearLogs();
-      }
-    );
-
+    this.messaging.registerHandler(POPUP_TO_BACKGROUND.CLEAR_LOGS, async () => {
+      await this.storage.clearLogs();
+    });
 
     // 处理来自 content script 的日志消息
     this.messaging.registerHandler(
@@ -351,7 +338,6 @@ class BackgroundService {
   async cleanupExpiredData() {
     try {
       this.logger.debug('清理过期数据');
-
 
       // 清理过期的日志数据（超过 3 天）
       const logs = await this.storage.getLogs();
