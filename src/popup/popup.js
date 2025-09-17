@@ -193,10 +193,8 @@ class PopupManager {
         type: POPUP_TO_CONTENT.START_CLEANING,
         payload: config,
       });
-      console.log('---设置运行状态');
       // 更新 UI 状态
       this.setRunningState(true);
-      console.log('---设置运行状态结束');
       this.log('开始清理推文...', 'info');
     } catch (error) {
       this.logger.error('启动清理失败:', error);
