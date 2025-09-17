@@ -96,58 +96,11 @@ class BackgroundService {
       }
     );
 
-    // 注册活跃标签页
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.REGISTER_ACTIVE_TAB,
-      async (payload, sender) => {
-        if (sender.tab) {
-          this.activeTabs.set(sender.tab.id, {
-            url: sender.tab.url,
-            timestamp: Date.now(),
-            ...payload,
-          });
-          this.logger.debug(`注册活跃标签页: ${sender.tab.id}`);
-        }
-        return { success: true };
-      }
-    );
-
-    // 注销活跃标签页
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.UNREGISTER_ACTIVE_TAB,
-      async (payload, sender) => {
-        if (sender.tab) {
-          this.activeTabs.delete(sender.tab.id);
-          this.logger.debug(`注销活跃标签页: ${sender.tab.id}`);
-        }
-        return { success: true };
-      }
-    );
-
-    // 广播消息到所有活跃标签页
-    this.messaging.registerHandler(
-      POPUP_TO_BACKGROUND.BROADCAST_TO_ACTIVE_TABS,
-      async (payload) => {
-        const results = [];
-        for (const [tabId, tabInfo] of this.activeTabs) {
-          try {
-            const response = await chrome.tabs.sendMessage(
-              tabId,
-              payload.message
-            );
-            results.push({ tabId, success: true, response });
-          } catch (error) {
-            results.push({ tabId, success: false, error: error.message });
-          }
-        }
-        return results;
-      }
-    );
 
     // 处理来自 content script 的日志消息
     this.messaging.registerHandler(
       CONTENT_TO_BACKGROUND.LOG_MESSAGE,
-      async (payload, sender) => {
+      async (payload) => {
         // 转发日志消息到 popup
         try {
           await this.messaging.sendToRuntime({
@@ -165,7 +118,7 @@ class BackgroundService {
     // 处理来自 content script 的进度更新消息
     this.messaging.registerHandler(
       CONTENT_TO_BACKGROUND.PROGRESS_UPDATE,
-      async (payload, sender) => {
+      async (payload) => {
         // 转发进度更新到 popup
         try {
           await this.messaging.sendToRuntime({
@@ -183,7 +136,7 @@ class BackgroundService {
     // 处理来自 content script 的清理完成消息
     this.messaging.registerHandler(
       CONTENT_TO_BACKGROUND.CLEANUP_COMPLETE,
-      async (payload, sender) => {
+      async (payload) => {
         // 转发清理完成消息到 popup
         try {
           await this.messaging.sendToRuntime({

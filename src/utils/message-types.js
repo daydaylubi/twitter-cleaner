@@ -66,20 +66,6 @@ export const POPUP_TO_BACKGROUND = {
   // 接收方: Background Script (BackgroundService)
   CLEAR_LOGS: 'CLEAR_LOGS',
 
-  // 注册活跃标签页
-  // 发送方: Popup
-  // 接收方: Background Script (BackgroundService)
-  REGISTER_ACTIVE_TAB: 'REGISTER_ACTIVE_TAB',
-
-  // 注销活跃标签页
-  // 发送方: Popup
-  // 接收方: Background Script (BackgroundService)
-  UNREGISTER_ACTIVE_TAB: 'UNREGISTER_ACTIVE_TAB',
-
-  // 广播消息到所有活跃标签页
-  // 发送方: Popup
-  // 接收方: Background Script (BackgroundService)
-  BROADCAST_TO_ACTIVE_TABS: 'BROADCAST_TO_ACTIVE_TABS',
 };
 
 // Background Script 到 Popup 的消息类型
