@@ -225,12 +225,14 @@ export class TwitterCleaner {
 
         if (batchSize === 0) {
           consecutiveEmptyPages++;
-          this.logger.info(
-            `页面无推文，尝试滚动加载 (${consecutiveEmptyPages}/${this.config.emptyPageStopThreshold})`
-          );
+          const message1 = `页面无推文，尝试滚动加载 (${consecutiveEmptyPages}/${this.config.emptyPageStopThreshold})`;
+          this.logger.info(message1);
+          await this.sendLog('info', message1);
 
           if (consecutiveEmptyPages >= this.config.emptyPageStopThreshold) {
-            this.logger.info('连续多次页面为空，可能账号无内容，停止清理');
+            const message2 = '连续多次页面为空，可能账号无内容，停止清理';
+            this.logger.info(message2);
+            await this.sendLog('info', message2);
             break;
           }
 
