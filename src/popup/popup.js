@@ -270,6 +270,15 @@ class PopupManager {
         return { success: true };
       }
     );
+
+    // 处理来自 background script 的清理完成消息
+    this.messaging.registerHandler(
+      BACKGROUND_TO_POPUP.CLEANUP_COMPLETE,
+      async (payload) => {
+        this.handleCleanupComplete(payload);
+        return { success: true };
+      }
+    );
   }
 
   handleProgressUpdate(payload) {
@@ -284,6 +293,23 @@ class PopupManager {
         payload.currentTweet.type
       } - ${payload.currentTweet.text.substring(0, 50)}...`;
     }
+  }
+
+  handleCleanupComplete(payload) {
+    // 更新统计数据
+    this.currentStats = payload.stats;
+    this.updateStatsUI();
+
+    // 设置运行状态为停止
+    this.setRunningState(false);
+
+    // 更新当前操作状态
+    const operationText =
+      this.elements.currentOperation.querySelector('.operation-text');
+    operationText.textContent = '清理完成';
+
+    // 添加完成日志
+    this.log('推文清理完成', 'info');
   }
 
   log(message, level = 'info') {

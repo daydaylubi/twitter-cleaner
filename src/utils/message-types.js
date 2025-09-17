@@ -29,6 +29,11 @@ export const CONTENT_TO_BACKGROUND = {
   // 发送方: Content Script (TwitterCleaner)
   // 接收方: Background Script (BackgroundService)
   LOG_MESSAGE: 'CONTENT_LOG_MESSAGE',
+
+  // 清理完成消息
+  // 发送方: Content Script (TwitterCleaner)
+  // 接收方: Background Script (BackgroundService)
+  CLEANUP_COMPLETE: 'CONTENT_CLEANUP_COMPLETE',
 };
 
 // Popup 到 Background Script 的消息类型
@@ -88,6 +93,11 @@ export const BACKGROUND_TO_POPUP = {
   // 发送方: Background Script (BackgroundService)
   // 接收方: Popup
   PROGRESS_UPDATE: 'POPUP_PROGRESS_UPDATE',
+
+  // 清理完成消息转发
+  // 发送方: Background Script (BackgroundService)
+  // 接收方: Popup
+  CLEANUP_COMPLETE: 'POPUP_CLEANUP_COMPLETE',
 };
 
 // Content Script 内部使用的消息类型

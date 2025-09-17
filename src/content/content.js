@@ -425,6 +425,9 @@ export class TwitterCleaner {
 
       // 发送最终状态更新
       await this.sendStatusUpdate();
+
+      // 发送清理完成消息
+      await this.sendCleanupComplete();
     } catch (error) {
       this.logger.error('清理完成处理失败:', error);
     }
@@ -444,6 +447,22 @@ export class TwitterCleaner {
       });
     } catch (error) {
       this.logger.error('发送状态更新失败:', error);
+    }
+  }
+
+  /**
+   * 发送清理完成消息
+   */
+  async sendCleanupComplete() {
+    try {
+      await this.messaging.sendToRuntime({
+        type: CONTENT_TO_BACKGROUND.CLEANUP_COMPLETE,
+        payload: {
+          stats: this.stats,
+        },
+      });
+    } catch (error) {
+      this.logger.error('发送清理完成消息失败:', error);
     }
   }
 

@@ -179,6 +179,24 @@ class BackgroundService {
         return { success: true };
       }
     );
+
+    // 处理来自 content script 的清理完成消息
+    this.messaging.registerHandler(
+      CONTENT_TO_BACKGROUND.CLEANUP_COMPLETE,
+      async (payload, sender) => {
+        // 转发清理完成消息到 popup
+        try {
+          await this.messaging.sendToRuntime({
+            type: BACKGROUND_TO_POPUP.CLEANUP_COMPLETE,
+            payload,
+          });
+        } catch (error) {
+          console.error('转发清理完成消息失败:', error);
+        }
+
+        return { success: true };
+      }
+    );
   }
 
   /**
