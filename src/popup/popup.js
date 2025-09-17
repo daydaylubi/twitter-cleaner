@@ -275,7 +275,9 @@ class PopupManager {
     this.messaging.registerHandler(
       BACKGROUND_TO_POPUP.CLEANUP_COMPLETE,
       async (payload) => {
-        this.handleCleanupComplete(payload);
+        if (this.isRunning) {
+          this.handleCleanupComplete(payload);
+        }
         return { success: true };
       }
     );
