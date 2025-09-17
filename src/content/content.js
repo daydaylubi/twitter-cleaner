@@ -451,6 +451,30 @@ export class TwitterCleaner {
   }
 
   /**
+   * 发送日志消息到 background script
+   * @param {string} level - 日志级别
+   * @param {string} message - 日志消息
+   * @param {...any} args - 额外参数
+   */
+  async sendLog(level, message, ...args) {
+    try {
+      await this.messaging.sendToRuntime({
+        type: CONTENT_TO_BACKGROUND.LOG_MESSAGE,
+        payload: {
+          level,
+          message,
+          args: args.length > 0 ? args : undefined,
+          component: 'ContentScript',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      // 如果发送失败，只在控制台记录错误，避免无限递归
+      console.error('发送日志消息失败:', error);
+    }
+  }
+
+  /**
    * 发送清理完成消息
    */
   async sendCleanupComplete() {
