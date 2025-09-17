@@ -169,6 +169,10 @@ export class TwitterCleaner {
       this.shouldStop = false;
       this.resetStats();
 
+      // 重置全局状态
+      this.processedTweetIds.clear();
+      this.currentBatch = [];
+
       // 删除器实例
       this.deleter = new TweetDeleter(this.config);
 
