@@ -9,9 +9,6 @@
     "build:dev": "webpack --mode development",
     "build:prod": "webpack --mode production",
     "package": "npm run build && cd dist && zip -r ../twitter-cleaner-v$(node -p \"require('./package.json').version\").zip .",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "format": "prettier --write src/**/*.{js,css,html}",
@@ -39,9 +36,6 @@
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
     "husky": "^8.0.3",
-    "jest": "^27.5.1",
-    "jest-chrome": "^0.8.0",
-    "babel-jest": "^27.5.1",
     "lint-staged": "^13.2.2",
     "prettier": "^2.8.8",
     "style-loader": "^3.3.0",
@@ -58,7 +52,7 @@
       "eslint --fix"
     ]
   },
-    "babel": {
+  "babel": {
     "presets": [
       [
         "@babel/preset-env",
