@@ -6,12 +6,6 @@
 Twitter Cleaner 采用 Chrome Extension Manifest V3 架构，基于现代 Web 技术栈构建，使用模块化设计确保代码的可维护性和可扩展性。
 
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Popup UI      │    │  Background     │    │  Content Script │
 │   (用户界面)     │    │  (后台服务)      │    │  (页面操作)      │
