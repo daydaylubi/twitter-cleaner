@@ -55,12 +55,6 @@ Twitter Cleaner 采用 Chrome Extension Manifest V3 架构，基于现代 Web �
 
 #### 关键类
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 class PopupManager {
   constructor() {
     this.storage = new StorageManager();
@@ -69,12 +63,6 @@ class PopupManager {
   }
 }
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
 
 #### 主要功能
 - **配置管理**: 保存和加载用户设置
@@ -95,12 +83,6 @@ class PopupManager {
 
 #### 关键类
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 class BackgroundService {
   constructor() {
     this.logger = createLogger('Background');
@@ -110,13 +92,6 @@ class BackgroundService {
   }
 }
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 #### 主要功能
 - **消息路由**: 转发各组件间的消息
 - **状态管理**: 维护扩展和标签页状态
@@ -138,12 +113,6 @@ class BackgroundService {
 
 #### 关键类
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 class TwitterCleaner {
   constructor() {
     this.detector = new TweetDetector();
@@ -160,12 +129,6 @@ class TweetDeleter {
   // 推文删除操作逻辑
 }
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
 
 #### 主要功能
 - **推文检测**: 识别页面中的推文元素
@@ -189,12 +152,6 @@ class TweetDeleter {
 
 #### 关键类
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 class MessageManager {
   // 消息传递管理
 }
@@ -207,38 +164,9 @@ class Logger {
   // 日志服务
 }
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ## 消息传递架构
 
-### 消息流向图
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Popup     │    │ Background  │    │Content Script│
-│             │    │             │    │             │
-│ ┌─────────┐ │    │ ┌─────────┐ │    │ ┌─────────┐ │
-│ │UI Logic │ │    │ │Message  │ │    │ │Cleaner  │ │
-│ │         │ │    │ │Router   │ │    │ │Logic    │ │
-│ └─────────┘ │    │ └─────────┘ │    │ └─────────┘ │
-└─────────────┘    └─────────────┘    └─────────────┘
-       │                   │                   │
-       │                   │                   │
-       ├───────────────────┼───────────────────┤
-       │                   │                   │
-       │                   │                   │
-       ▼                   ▼                   ▼
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Storage   │    │   Storage   │    │   Storage   │
-│ (Config)    │    │ (Logs)      │    │ (Temp)      │
-└─────────────┘    └─────────────┘    └─────────────┘
-```
-
-### 实际通信路径
+### 通信路径
 
 #### 1. 直接通信
 - **Popup ↔ Content Script**: 使用 `chrome.tabs.sendMessage()` 直接通信
@@ -285,12 +213,6 @@ await chrome.runtime.sendMessage({
 
 ### DOM 选择器策略
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 const selectors = {
   tweet: [
     '[data-testid="tweet"]',
@@ -302,13 +224,6 @@ const selectors = {
   userName: '[data-testid="User-Name"]'
 };
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ### 推文类型识别
 1. **转推识别**: 检查转推按钮状态和文本指示器
 2. **回复识别**: 检查回复按钮和文本指示器
@@ -317,32 +232,13 @@ const selectors = {
 
 ### 时间戳解析
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 const timestamp = element.querySelector('time[datetime]');
 const date = new Date(timestamp.getAttribute('datetime'));
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ## 删除操作策略
 
 ### 删除方法映射
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 const deleteHandlers = {
   RETWEET: this.undoRetweet.bind(this),
   REPLY: this.deleteViaMenu.bind(this),
@@ -350,12 +246,6 @@ const deleteHandlers = {
   QUOTE: this.deleteViaMenu.bind(this)
 };
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
 
 ### 转推取消流程
 1. 定位转推按钮
@@ -372,52 +262,20 @@ const deleteHandlers = {
 
 ### 批量处理
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 // 分批处理推文，避免页面卡顿
 const batchSize = 10;
 const batches = this.chunkArray(tweets, batchSize);
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ### 智能滚动
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 // 检测页面高度变化，判断是否有新内容
 const beforeScrollHeight = document.documentElement.scrollHeight;
 // 执行滚动操作
 const afterScrollHeight = document.documentElement.scrollHeight;
 const hasNewContent = afterScrollHeight > beforeScrollHeight;
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ### 内存管理
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 // 清理已处理的推文 ID，避免重复处理
 this.processedTweetIds.add(tweetId);
 
@@ -426,12 +284,6 @@ if (this.processedTweetIds.size > 10000) {
   this.processedTweetIds.clear();
 }
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
 
 ## 错误处理
 
@@ -443,12 +295,6 @@ if (this.processedTweetIds.size > 10000) {
 
 ### 错误恢复策略
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 try {
   await this.deleteTweet(tweetElement, tweetType);
 } catch (error) {
@@ -462,23 +308,10 @@ try {
   }
 }
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ## 配置管理
 
 ### 默认配置
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 const defaultConfig = {
   cutoffDate: new Date().toISOString().split('T')[0],
   tweetTypes: ['TWEET', 'RETWEET', 'REPLY', 'QUOTE'],
@@ -491,32 +324,14 @@ const defaultConfig = {
 };
 ```
 
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ### 配置持久化
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 // 保存配置
 await this.storage.saveConfig(config);
 
 // 加载配置
 const config = await this.storage.getConfig();
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
 
 ## 日志系统
 
@@ -528,12 +343,6 @@ const config = await this.storage.getConfig();
 
 ### 日志格式
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)javascript
 {
   level: 'info',
   message: '推文删除成功',
@@ -542,12 +351,6 @@ const config = await this.storage.getConfig();
   args: { tweetId: '1234567890' }
 }
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
 
 ### 日志存储
 - 使用 Chrome Storage API 存储日志
@@ -558,12 +361,6 @@ const config = await this.storage.getConfig();
 
 ### 开发环境
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)bash
 # 安装依赖
 npm install
 
@@ -574,12 +371,6 @@ npm run dev
 npm run build
 ```
 
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
 ### 构建配置
 - **Webpack**: 模块打包和代码转换
 - **Babel**: ES6+ 代码转换
@@ -588,69 +379,6 @@ npm run build
 
 ### 打包发布
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)bash
 # 创建发布包
 npm run package
 ```
-
-**实际消息流向**:
-- Popup ↔ Content Script (直接通信)
-- Popup ↔ Background (配置和状态管理)
-- Content Script → Background (日志和进度报告)
-- Background → Popup (状态转发)
-
-## 测试策略
-
-### 单元测试
-- 工具函数测试
-- 消息传递测试
-- 配置管理测试
-
-### 集成测试
-- 组件间通信测试
-- 端到端流程测试
-- 错误处理测试
-
-### 手动测试
-- 不同推文类型测试
-- 大量数据测试
-- 异常情况测试
-
-## 安全考虑
-
-### 数据安全
-- 所有操作在本地完成
-- 不上传任何用户数据
-- 使用 Chrome Storage API 安全存储
-
-### 操作安全
-- 可配置的操作延迟
-- 错误次数限制
-- 用户确认机制
-
-### 平台合规
-- 遵守 Twitter 服务条款
-- 避免触发反爬虫机制
-- 合理控制操作频率
-
-## 维护和更新
-
-### 代码维护
-- 模块化设计便于维护
-- 完善的日志系统便于调试
-- 清晰的代码注释和文档
-
-### 功能更新
-- 支持 Twitter 界面更新
-- 添加新的推文类型支持
-- 优化性能和用户体验
-
-### 兼容性维护
-- 支持 Chrome 版本更新
-- 适配 Twitter 界面变化
-- 处理平台 API 变更
